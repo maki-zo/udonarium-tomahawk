@@ -446,7 +446,15 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         Logger.debug('NETWORK_ERROR', event.data.peerId);
         let errorType: string = event.data.errorType;
         let errorMessage: string = event.data.errorMessage;
-
+// Tomahawk local development:
+// localhostではSkyWayバックエンド未起動によるserver-errorを表示しない
+if (
+  window.location.hostname === 'localhost' &&
+  errorType === 'server-error'
+) {
+  Logger.warn('Tomahawk local: SkyWay backend is unavailable.', errorMessage);
+  return;
+}
         this.ngZone.run(async () => {
           //SKyWayエラーハンドリング
           let quietErrorTypes = ['peer-unavailable'];

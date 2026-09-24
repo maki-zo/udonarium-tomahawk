@@ -206,6 +206,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   private wallGridVersionCounter: number = 0;
   private lightingAnimFlagCache: { gen: number; value: boolean } = { gen: -1, value: false };
   private scratchMasks: HTMLCanvasElement[] = [];
+  private exploredFogCanvas: HTMLCanvasElement | null = null;
   private wallPenCache: { raw: string; canvas: HTMLCanvasElement } = null;
   get isLightingActive(): boolean {
     return this.currentTable?.lightingEnabled && this.currentTable?.lightingNightMode;
@@ -1346,6 +1347,17 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     ctx.globalCompositeOperation = 'source-atop';
     this.drawLightColors(ctx, gridSize);
     if (table.roomMode === 'advanced') this.drawSightColors(ctx, gridSize);
+    // Tomahawk Fog of War:
+// 一度探索した場所は暗幕を半透明まで削る
+if (table.roomMode === 'advanced' && this.exploredFogCanvas) {
+  ctx.save();
+
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.globalAlpha = 0.55;
+  ctx.drawImage(this.exploredFogCanvas, 0, 0, w, h);
+
+  ctx.restore();
+}
     ctx.globalCompositeOperation = 'source-over';
   }
 
@@ -1388,6 +1400,14 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     ctx.drawImage(normalSight, 0, 0, w, h);
     ctx.drawImage(darkvisionSight, 0, 0, w, h);
     ctx.drawImage(superiorDarkvisionSight, 0, 0, w, h);
+// Tomahawk Fog of War:
+// 現在見えている領域を「探索済み領域」に蓄積する
+const exploredFog = this.getExploredFogCanvas(w, h);
+const exploredCtx = exploredFog.getContext('2d');
+
+exploredCtx.drawImage(normalSight, 0, 0, w, h);
+exploredCtx.drawImage(darkvisionSight, 0, 0, w, h);
+exploredCtx.drawImage(superiorDarkvisionSight, 0, 0, w, h);
   }
 
   /** 全面マスクcanvasをプールから取得（サイズ変化時のみ再確保。毎フレームのallocを避ける） */
@@ -1405,6 +1425,22 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     return canvas;
   }
+/** Tomahawk Fog of War: 一度見た領域を保持するCanvas */
+private getExploredFogCanvas(w: number, h: number): HTMLCanvasElement {
+  if (!this.exploredFogCanvas) {
+    this.exploredFogCanvas = document.createElement('canvas');
+  }
+
+  if (
+    this.exploredFogCanvas.width !== w ||
+    this.exploredFogCanvas.height !== h
+  ) {
+    this.exploredFogCanvas.width = w;
+    this.exploredFogCanvas.height = h;
+  }
+
+  return this.exploredFogCanvas;
+}
 
   private getMySightCharacters(): GameCharacter[] {
     if (this.currentTable?.roomMode !== 'advanced') return [];
