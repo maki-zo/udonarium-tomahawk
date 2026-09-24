@@ -252,16 +252,19 @@ export class TabletopActionService {
     tableSelecter.viewTableIdentifier = gameTable.identifier;
   }
 
-  private consumePendingRoomMode(): 'standard' | 'advanced' {
-    try {
-      const mode = localStorage.getItem('udonarium.pendingRoomMode.v1');
-      localStorage.removeItem('udonarium.pendingRoomMode.v1');
-      if (mode === 'advanced') return 'advanced';
-    } catch (e) {
-      Logger.warn('room mode localStorage read failed', e);
-    }
-    return 'standard';
+private consumePendingRoomMode(): 'standard' | 'advanced' {
+  try {
+    const mode = localStorage.getItem('udonarium.pendingRoomMode.v1');
+
+    // Tomahawk:
+    // AdvancedモードをF5後も維持するため、ここでは削除しない
+    if (mode === 'advanced') return 'advanced';
+  } catch (e) {
+    Logger.warn('room mode localStorage read failed', e);
   }
+
+  return 'standard';
+}
 
   // バフ追加identifierを固定にするため初期キャラのバフはGameCharacterでやらずにここでやる
   addBuffRound(character: GameCharacter, name: string, subcom: string, round: number){

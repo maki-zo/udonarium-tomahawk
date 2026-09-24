@@ -87,7 +87,13 @@ type WallGrid = {
   rects: { x1: number; y1: number; x2: number; y2: number }[]; // 壁AABB（px座標・高速パス/ブロッカー描画用）
   hasPen: boolean; // ペン描き壁あり（AABB高速パス不可）
 };
-
+/** Tomahawk Fog of War: 永続化用の探索マスク */
+interface FogOfWarData {
+  version: number;
+  width: number;
+  height: number;
+  explored: number[];
+}
 @Component({
   selector: 'game-table',
   templateUrl: './game-table.component.html',
@@ -190,6 +196,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   private wallGridTableSize: string = '';
   private static readonly LIGHTING_MIN_INTERVAL = 66; // ms（アニメ光源がある場合の描画間隔 ≈15fps）
   private static readonly LIGHTING_SCALE = 0.75; // 照明canvasの解像度スケール
+  private static readonly FOG_DATA_CELL_SIZE = 8;
   private lightingDirty: boolean = true;
   private lightingNeedsAnimation: boolean = false;
   private lightingInactiveClean: boolean = false;
@@ -208,6 +215,8 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   private scratchMasks: HTMLCanvasElement[] = [];
   private exploredFogCanvas: HTMLCanvasElement | null = null;
   private wallPenCache: { raw: string; canvas: HTMLCanvasElement } = null;
+  private fogSaveTimer: any = null;
+  private restoredFogTableId: string = '';
   get isLightingActive(): boolean {
     return this.currentTable?.lightingEnabled && this.currentTable?.lightingNightMode;
   }
@@ -1262,6 +1271,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private renderLighting(now: number = performance.now()) {
+
     const canvas = this.lightingCanvas?.nativeElement;
     if (!canvas) return;
 
@@ -1323,9 +1333,21 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
       ctx.fillRect(0, 0, w, h);
     }
 
+    
+
+
     // 壁グリッド構築
     const wallGrid = this.buildWallGrid(gridSize, w, h);
     this.refreshLightingCaches(wallGrid);
+// Tomahawk Fog of War:
+// 卓を開いた最初の1回だけ保存済み探索履歴を復元する
+if (
+  table.roomMode === 'advanced' &&
+  this.restoredFogTableId !== table.identifier
+) {
+  this.restoreFogOfWarData(w, h);
+  this.restoredFogTableId = table.identifier;
+}
 
     // 光源の穴を開ける（レイキャスト or 通常）
     // GMモードでは暗幕がないので、光源のグローだけ描く
@@ -1337,6 +1359,12 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     ctx.globalCompositeOperation = 'destination-out';
 
     if (table.roomMode === 'advanced') {
+  // Tomahawk Fog of War:
+  // 卓を開いた最初の1回だけ保存済み探索履歴を復元する
+  if (this.restoredFogTableId !== table.identifier) {
+    this.restoreFogOfWarData(w, h);
+    this.restoredFogTableId = table.identifier;
+  }
       this.drawAdvancedVisibility(ctx, gridSize, wallGrid, w, h);
     } else {
       this.drawAmbientLight(ctx, w, h);
@@ -1418,6 +1446,7 @@ if (this.currentTable?.fogOfWarEnabled) {
   exploredCtx.drawImage(normalSight, 0, 0, w, h);
   exploredCtx.drawImage(darkvisionSight, 0, 0, w, h);
   exploredCtx.drawImage(superiorDarkvisionSight, 0, 0, w, h);
+  this.scheduleFogOfWarSave();
 }
   }
 
@@ -1454,17 +1483,180 @@ private getExploredFogCanvas(w: number, h: number): HTMLCanvasElement {
 }
 /** Tomahawk Fog of War: 探索済み領域をすべて消去 */
 private clearExploredFog(): void {
-  if (!this.exploredFogCanvas) return;
+  // メモリ上の探索履歴を消去
+  if (this.exploredFogCanvas) {
+    const ctx = this.exploredFogCanvas.getContext('2d');
 
-  const ctx = this.exploredFogCanvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(
+        0,
+        0,
+        this.exploredFogCanvas.width,
+        this.exploredFogCanvas.height
+      );
+    }
+  }
+
+  // 保存済みの探索履歴も消去
+  const table = this.currentTable;
+if (table) {
+  table.fogOfWarData = '[]';
+
+  // Tomahawk Fog of War:
+  // ローカルバックアップも削除
+  try {
+    localStorage.removeItem(
+      `udonarium.tomahawk.fog.v1.${table.identifier}`
+    );
+  } catch (_) {
+    // localStorageが使用できない環境では何もしない
+  }
+
+  table.update();
+}
+}
+/** Tomahawk Fog of War: 探索Canvasを保存用データへ変換 */
+private createFogOfWarData(): FogOfWarData | null {
+  if (!this.exploredFogCanvas) return null;
+
+  const canvas = this.exploredFogCanvas;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const cellSize = GameTableComponent.FOG_DATA_CELL_SIZE;
+  const width = Math.ceil(canvas.width / cellSize);
+  const height = Math.ceil(canvas.height / cellSize);
+  const explored: number[] = new Array(width * height).fill(0);
+
+  const imageData = ctx.getImageData(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const sampleX = Math.min(
+        Math.floor(x * cellSize + cellSize / 2),
+        canvas.width - 1
+      );
+      const sampleY = Math.min(
+        Math.floor(y * cellSize + cellSize / 2),
+        canvas.height - 1
+      );
+
+      const alphaIndex =
+        (sampleY * canvas.width + sampleX) * 4 + 3;
+
+      if (imageData.data[alphaIndex] > 0) {
+        explored[y * width + x] = 1;
+      }
+    }
+  }
+
+  return {
+    version: 1,
+    width,
+    height,
+    explored
+  };
+}
+/** Tomahawk Fog of War: 保存データから探索Canvasを復元 */
+private restoreFogOfWarData(w: number, h: number): void {
+  const table = this.currentTable;
+  if (!table) return;
+
+
+
+  let serialized = table.fogOfWarData;
+
+  // Tomahawk Fog of War:
+  // 卓データに探索履歴が無ければローカルバックアップを使用する
+  if (!serialized || serialized === '[]') {
+    try {
+      serialized = localStorage.getItem(
+        `udonarium.tomahawk.fog.v1.${table.identifier}`
+      ) || '[]';
+    } catch (_) {
+      serialized = '[]';
+    }
+  }
+
+  if (!serialized || serialized === '[]') return;
+
+  let data: FogOfWarData;
+
+  try {
+    data = JSON.parse(serialized);
+  } catch (_) {
+    return;
+  }
+  if (
+    !data ||
+    data.version !== 1 ||
+    !data.width ||
+    !data.height ||
+    !Array.isArray(data.explored)
+  ) {
+    return;
+  }
+
+  const canvas = this.getExploredFogCanvas(w, h);
+  const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  ctx.clearRect(
-    0,
-    0,
-    this.exploredFogCanvas.width,
-    this.exploredFogCanvas.height
+  ctx.clearRect(0, 0, w, h);
+
+  const cellWidth = w / data.width;
+  const cellHeight = h / data.height;
+
+  ctx.fillStyle = '#ffffff';
+
+  for (let y = 0; y < data.height; y++) {
+    for (let x = 0; x < data.width; x++) {
+      if (!data.explored[y * data.width + x]) continue;
+
+      ctx.fillRect(
+        x * cellWidth,
+        y * cellHeight,
+        Math.ceil(cellWidth),
+        Math.ceil(cellHeight)
+      );
+    }
+  }
+}
+/** Tomahawk Fog of War: 探索履歴を遅延保存する */
+private scheduleFogOfWarSave(): void {
+  if (this.fogSaveTimer) {
+    clearTimeout(this.fogSaveTimer);
+  }
+
+  this.fogSaveTimer = setTimeout(() => {
+    this.fogSaveTimer = null;
+
+    const table = this.currentTable;
+    if (!table || !table.fogOfWarEnabled) return;
+
+    const data = this.createFogOfWarData();
+    if (!data) return;
+
+const serialized = JSON.stringify(data);
+
+table.fogOfWarData = serialized;
+table.update();
+
+// Tomahawk Fog of War:
+// P2P未接続時でも探索履歴を保持するローカルバックアップ
+try {
+  localStorage.setItem(
+    `udonarium.tomahawk.fog.v1.${table.identifier}`,
+    serialized
   );
+} catch (_) {
+  // localStorageが使用できない環境では何もしない
+}
+  }, 500);
 }
   private getMySightCharacters(): GameCharacter[] {
     if (this.currentTable?.roomMode !== 'advanced') return [];
