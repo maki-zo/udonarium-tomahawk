@@ -21,6 +21,7 @@ export class LightingPanelComponent implements OnInit {
   };
   colors = ['#fff3c4', '#ff4fd8', '#4cf3ff', '#7dff6a', '#9b5cff', '#ff5a20'];
   visionEnabled: boolean = false;
+  fogOfWarEnabled: boolean = false;
 
   get isAdvancedRoom(): boolean { return this.table?.roomMode === 'advanced'; }
 
@@ -76,6 +77,7 @@ export class LightingPanelComponent implements OnInit {
       haze: t.lightingHaze,
     };
     this.visionEnabled = t.visionEnabled;
+    this.fogOfWarEnabled = t.fogOfWarEnabled;
   }
 
   private saveToTable() {
@@ -133,4 +135,14 @@ export class LightingPanelComponent implements OnInit {
     t.visionEnabled = enabled;
     t.update();
   }
+  toggleFogOfWar(enabled: boolean) {
+  this.fogOfWarEnabled = enabled;
+  const t = this.table;
+  if (!t) return;
+  t.fogOfWarEnabled = enabled;
+  t.update();
+}
+clearFogOfWar() {
+  EventSystem.trigger('CLEAR_FOG_OF_WAR', {});
+}
 }

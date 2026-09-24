@@ -23,6 +23,26 @@
       </button>
     </div>
     <p class="hint">ONにすると、自分のコマの視界範囲外が隠されます。</p>
+    <div class="vision-row">
+  <span>Fog of War</span>
+  <button
+    type="button"
+    class="option-toggle"
+    [class.on]="fogOfWarEnabled"
+    (click)="toggleFogOfWar(!fogOfWarEnabled)">
+    {{ fogOfWarEnabled ? 'ON' : 'OFF' }}
+  </button>
+</div>
+<p class="hint">ONにすると、一度見た範囲を探索済みとして記録します。</p>
+<div class="vision-row" *ngIf="fogOfWarEnabled">
+  <span>探索履歴</span>
+  <button
+    type="button"
+    class="option-toggle"
+    (click)="clearFogOfWar()">
+    リセット
+  </button>
+</div>
   </section>
 
 </div>

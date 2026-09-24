@@ -55,6 +55,7 @@ export class GameTable extends ObjectNode {
   @SyncVar() lightingFlameLevel: number = 0.5;
   @SyncVar() lightingHaze: boolean = false;
   @SyncVar() visionEnabled: boolean = false; // アドバンスモード: 各コマの視界制限 ON/OFF
+  @SyncVar() fogOfWarEnabled: boolean = false; // Tomahawk：Fog of War ON/OFF
   @SyncVar() initialObjectsPlaced: boolean = false;
   @SyncVar() diceCutinEnabled: boolean = true;
   @SyncVar() extendedDiceBotEnabled: boolean = false;

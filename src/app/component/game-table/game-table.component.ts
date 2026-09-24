@@ -292,6 +292,11 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
           if (alias !== GameCharacter.aliasName) this.invalidateWallGrid();
         }
       })
+            .on('CLEAR_FOG_OF_WAR', event => {
+        this.clearExploredFog();
+        this.invalidateLighting();
+        this.renderLighting();
+      })
       .on('RE_DRAW_TABLE', event => {
         Logger.debug("テーブル再描画");
         this.invalidateLighting();
@@ -1349,7 +1354,11 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     if (table.roomMode === 'advanced') this.drawSightColors(ctx, gridSize);
     // Tomahawk Fog of War:
 // 一度探索した場所は暗幕を半透明まで削る
-if (table.roomMode === 'advanced' && this.exploredFogCanvas) {
+if (
+  table.roomMode === 'advanced' &&
+  table.fogOfWarEnabled &&
+  this.exploredFogCanvas
+) {
   ctx.save();
 
   ctx.globalCompositeOperation = 'destination-out';
@@ -1401,13 +1410,15 @@ if (table.roomMode === 'advanced' && this.exploredFogCanvas) {
     ctx.drawImage(darkvisionSight, 0, 0, w, h);
     ctx.drawImage(superiorDarkvisionSight, 0, 0, w, h);
 // Tomahawk Fog of War:
-// 現在見えている領域を「探索済み領域」に蓄積する
-const exploredFog = this.getExploredFogCanvas(w, h);
-const exploredCtx = exploredFog.getContext('2d');
+// Fog of WarがONの時だけ、現在見えている領域を「探索済み領域」に蓄積する
+if (this.currentTable?.fogOfWarEnabled) {
+  const exploredFog = this.getExploredFogCanvas(w, h);
+  const exploredCtx = exploredFog.getContext('2d');
 
-exploredCtx.drawImage(normalSight, 0, 0, w, h);
-exploredCtx.drawImage(darkvisionSight, 0, 0, w, h);
-exploredCtx.drawImage(superiorDarkvisionSight, 0, 0, w, h);
+  exploredCtx.drawImage(normalSight, 0, 0, w, h);
+  exploredCtx.drawImage(darkvisionSight, 0, 0, w, h);
+  exploredCtx.drawImage(superiorDarkvisionSight, 0, 0, w, h);
+}
   }
 
   /** 全面マスクcanvasをプールから取得（サイズ変化時のみ再確保。毎フレームのallocを避ける） */
@@ -1441,7 +1452,20 @@ private getExploredFogCanvas(w: number, h: number): HTMLCanvasElement {
 
   return this.exploredFogCanvas;
 }
+/** Tomahawk Fog of War: 探索済み領域をすべて消去 */
+private clearExploredFog(): void {
+  if (!this.exploredFogCanvas) return;
 
+  const ctx = this.exploredFogCanvas.getContext('2d');
+  if (!ctx) return;
+
+  ctx.clearRect(
+    0,
+    0,
+    this.exploredFogCanvas.width,
+    this.exploredFogCanvas.height
+  );
+}
   private getMySightCharacters(): GameCharacter[] {
     if (this.currentTable?.roomMode !== 'advanced') return [];
     const peerId = Network.peerId;
