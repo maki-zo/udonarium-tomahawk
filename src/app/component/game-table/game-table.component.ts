@@ -1359,12 +1359,7 @@ if (
     ctx.globalCompositeOperation = 'destination-out';
 
     if (table.roomMode === 'advanced') {
-  // Tomahawk Fog of War:
-  // 卓を開いた最初の1回だけ保存済み探索履歴を復元する
-  if (this.restoredFogTableId !== table.identifier) {
-    this.restoreFogOfWarData(w, h);
-    this.restoredFogTableId = table.identifier;
-  }
+  
       this.drawAdvancedVisibility(ctx, gridSize, wallGrid, w, h);
     } else {
       this.drawAmbientLight(ctx, w, h);
@@ -1506,7 +1501,7 @@ if (table) {
   // ローカルバックアップも削除
   try {
     localStorage.removeItem(
-      `udonarium.tomahawk.fog.v1.${table.identifier}`
+      this.getFogOfWarStorageKey()
     );
   } catch (_) {
     // localStorageが使用できない環境では何もしない
@@ -1562,12 +1557,32 @@ private createFogOfWarData(): FogOfWarData | null {
     explored
   };
 }
+/** Tomahawk Fog of War: ローカル保存用の安定したキーを取得 */
+private getFogOfWarStorageKey(): string {
+  const table = this.currentTable;
+
+  if (!table) {
+    return 'udonarium.tomahawk.fog.v1.default';
+  }
+
+  // 最初のテーブルはF5前後でidentifierが変わる場合があるため、
+  // テーブル名をローカル保存キーとして使用する。
+  const tableName = (table.name || 'default').trim();
+
+  return `udonarium.tomahawk.fog.v1.table.${encodeURIComponent(tableName)}`;
+}
 /** Tomahawk Fog of War: 保存データから探索Canvasを復元 */
 private restoreFogOfWarData(w: number, h: number): void {
   const table = this.currentTable;
   if (!table) return;
+// Tomahawk Fog of War:
+// テーブル切替時に前のテーブルの探索履歴を残さない
+const fogCanvas = this.getExploredFogCanvas(w, h);
+const fogCanvasCtx = fogCanvas.getContext('2d');
 
-
+if (fogCanvasCtx) {
+  fogCanvasCtx.clearRect(0, 0, w, h);
+}
 
   let serialized = table.fogOfWarData;
 
@@ -1576,7 +1591,7 @@ private restoreFogOfWarData(w: number, h: number): void {
   if (!serialized || serialized === '[]') {
     try {
       serialized = localStorage.getItem(
-        `udonarium.tomahawk.fog.v1.${table.identifier}`
+        this.getFogOfWarStorageKey()
       ) || '[]';
     } catch (_) {
       serialized = '[]';
@@ -1650,7 +1665,7 @@ table.update();
 // P2P未接続時でも探索履歴を保持するローカルバックアップ
 try {
   localStorage.setItem(
-    `udonarium.tomahawk.fog.v1.${table.identifier}`,
+      this.getFogOfWarStorageKey(),
     serialized
   );
 } catch (_) {
