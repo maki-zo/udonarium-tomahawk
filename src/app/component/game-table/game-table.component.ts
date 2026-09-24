@@ -217,6 +217,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   private wallPenCache: { raw: string; canvas: HTMLCanvasElement } = null;
   private fogSaveTimer: any = null;
   private restoredFogTableId: string = '';
+  private lastAppliedFogData: string = '';
   get isLightingActive(): boolean {
     return this.currentTable?.lightingEnabled && this.currentTable?.lightingNightMode;
   }
@@ -1340,13 +1341,34 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     const wallGrid = this.buildWallGrid(gridSize, w, h);
     this.refreshLightingCaches(wallGrid);
 // Tomahawk Fog of War:
-// 卓を開いた最初の1回だけ保存済み探索履歴を復元する
-if (
-  table.roomMode === 'advanced' &&
-  this.restoredFogTableId !== table.identifier
-) {
-  this.restoreFogOfWarData(w, h);
-  this.restoredFogTableId = table.identifier;
+// テーブル切替時、または共有Fogデータが更新された時に探索履歴を反映する
+if (table.roomMode === 'advanced') {
+  const fogData = table.fogOfWarData || '[]';
+  const tableChanged =
+    this.restoredFogTableId !== table.identifier;
+
+  // Tomahawk Fog of War:
+  // 別テーブルへ切り替えた時だけ、前のテーブルのFogを消す
+  if (tableChanged) {
+    const fogCanvas = this.getExploredFogCanvas(w, h);
+    const fogCtx = fogCanvas.getContext('2d');
+
+    if (fogCtx) {
+      fogCtx.clearRect(0, 0, w, h);
+    }
+
+    this.lastAppliedFogData = '';
+  }
+
+  // 初回表示、または他プレイヤーから共有Fogが更新された時に反映
+  if (
+    tableChanged ||
+    this.lastAppliedFogData !== fogData
+  ) {
+    this.restoreFogOfWarData(w, h);
+    this.restoredFogTableId = table.identifier;
+    this.lastAppliedFogData = fogData;
+  }
 }
 
     // 光源の穴を開ける（レイキャスト or 通常）
@@ -1557,6 +1579,39 @@ private createFogOfWarData(): FogOfWarData | null {
     explored
   };
 }
+/** Tomahawk Fog of War: 2つの探索履歴をOR結合する */
+private mergeFogOfWarData(
+  base: FogOfWarData | null,
+  incoming: FogOfWarData | null
+): FogOfWarData | null {
+  if (!base) return incoming;
+  if (!incoming) return base;
+
+  // 解像度が違うデータは安全のため結合しない
+  if (
+    base.version !== 1 ||
+    incoming.version !== 1 ||
+    base.width !== incoming.width ||
+    base.height !== incoming.height
+  ) {
+    return incoming;
+  }
+
+  const length = base.width * base.height;
+  const explored: number[] = new Array(length);
+
+  for (let i = 0; i < length; i++) {
+    explored[i] =
+      base.explored[i] || incoming.explored[i] ? 1 : 0;
+  }
+
+  return {
+    version: 1,
+    width: base.width,
+    height: base.height,
+    explored
+  };
+}
 /** Tomahawk Fog of War: ローカル保存用の安定したキーを取得 */
 private getFogOfWarStorageKey(): string {
   const table = this.currentTable;
@@ -1577,12 +1632,6 @@ private restoreFogOfWarData(w: number, h: number): void {
   if (!table) return;
 // Tomahawk Fog of War:
 // テーブル切替時に前のテーブルの探索履歴を残さない
-const fogCanvas = this.getExploredFogCanvas(w, h);
-const fogCanvasCtx = fogCanvas.getContext('2d');
-
-if (fogCanvasCtx) {
-  fogCanvasCtx.clearRect(0, 0, w, h);
-}
 
   let serialized = table.fogOfWarData;
 
@@ -1620,9 +1669,6 @@ if (fogCanvasCtx) {
   const canvas = this.getExploredFogCanvas(w, h);
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-
-  ctx.clearRect(0, 0, w, h);
-
   const cellWidth = w / data.width;
   const cellHeight = h / data.height;
 
@@ -1653,12 +1699,39 @@ private scheduleFogOfWarSave(): void {
     const table = this.currentTable;
     if (!table || !table.fogOfWarEnabled) return;
 
-    const data = this.createFogOfWarData();
-    if (!data) return;
+    const localData = this.createFogOfWarData();
+if (!localData) return;
 
-const serialized = JSON.stringify(data);
+// Tomahawk Fog of War:
+// すでに卓に保存されている共有Fogと、自分の探索履歴をOR結合する
+let sharedData: FogOfWarData | null = null;
+
+try {
+  const raw = table.fogOfWarData || '[]';
+  const parsed = JSON.parse(raw);
+
+  if (
+    parsed &&
+    parsed.version === 1 &&
+    Array.isArray(parsed.explored)
+  ) {
+    sharedData = parsed as FogOfWarData;
+  }
+} catch (_) {
+  sharedData = null;
+}
+
+const mergedData = this.mergeFogOfWarData(
+  sharedData,
+  localData
+);
+
+if (!mergedData) return;
+
+const serialized = JSON.stringify(mergedData);
 
 table.fogOfWarData = serialized;
+this.lastAppliedFogData = serialized;
 table.update();
 
 // Tomahawk Fog of War:
