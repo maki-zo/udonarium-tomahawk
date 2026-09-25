@@ -1407,7 +1407,7 @@ if (
   ctx.save();
 
   ctx.globalCompositeOperation = 'destination-out';
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = 0.25;
   ctx.drawImage(this.exploredFogCanvas, 0, 0, w, h);
 
   ctx.restore();
