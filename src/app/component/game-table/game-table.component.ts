@@ -212,8 +212,9 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   private lastWallGridVersion: number = -1;
   private wallGridVersionCounter: number = 0;
   private lightingAnimFlagCache: { gen: number; value: boolean } = { gen: -1, value: false };
-  private scratchMasks: HTMLCanvasElement[] = [];
-  private exploredFogCanvas: HTMLCanvasElement | null = null;
+private scratchMasks: HTMLCanvasElement[] = [];
+private exploredFogCanvas: HTMLCanvasElement | null = null;
+private fogFeatherCanvas: HTMLCanvasElement | null = null;
   private wallPenCache: { raw: string; canvas: HTMLCanvasElement } = null;
   private fogSaveTimer: any = null;
   private restoredFogTableId: string = '';
@@ -1399,6 +1400,9 @@ if (table.roomMode === 'advanced') {
     if (table.roomMode === 'advanced') this.drawSightColors(ctx, gridSize);
     // Tomahawk Fog of War:
 // 一度探索した場所は暗幕を半透明まで削る
+// Tomahawk Fog of War:
+// 一度探索した場所は暗幕を半透明まで削る。
+// 境界は内側だけフェザーし、未探索領域へは滲ませない。
 if (
   table.roomMode === 'advanced' &&
   table.fogOfWarEnabled &&
@@ -1406,15 +1410,64 @@ if (
 ) {
   ctx.save();
 
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.globalAlpha = 0.25;
-  ctx.drawImage(this.exploredFogCanvas, 0, 0, w, h);
+  // フェザー用Canvasは毎回生成せず再利用する
+  if (!this.fogFeatherCanvas) {
+    this.fogFeatherCanvas = document.createElement('canvas');
+  }
+
+  const featherCanvas = this.fogFeatherCanvas;
+
+  // サイズ変更時だけ再確保
+  if (
+    featherCanvas.width !== w ||
+    featherCanvas.height !== h
+  ) {
+    featherCanvas.width = w;
+    featherCanvas.height = h;
+  }
+
+  const featherCtx = featherCanvas.getContext('2d');
+
+  if (featherCtx) {
+    // 前回の描画を消去
+    featherCtx.clearRect(0, 0, w, h);
+
+    // 1. 探索済みマスクをぼかす
+    featherCtx.save();
+    featherCtx.filter = 'blur(10px)';
+    featherCtx.drawImage(
+      this.exploredFogCanvas,
+      0,
+      0,
+      w,
+      h
+    );
+    featherCtx.restore();
+
+    // 2. 元の探索済み領域で切り抜く
+    //    blurが壁の向こう側へ漏れるのを防ぐ
+    featherCtx.globalCompositeOperation = 'destination-in';
+    featherCtx.drawImage(
+      this.exploredFogCanvas,
+      0,
+      0,
+      w,
+      h
+    );
+
+    featherCtx.globalCompositeOperation = 'source-over';
+
+    // 3. 内側フェザー済みマスクで暗幕を削る
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(featherCanvas, 0, 0, w, h);
+  }
 
   ctx.restore();
 }
-    ctx.globalCompositeOperation = 'source-over';
-  }
 
+ctx.globalCompositeOperation = 'source-over';
+}
   /** 時間ベースでゆらぎ位相を進める（フレームレートに依存しない） */
   private updateFlickerPhase(now: number) {
     if (!this.lastLightingRender) this.lastLightingRender = now;
