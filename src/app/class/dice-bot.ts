@@ -1203,6 +1203,7 @@ export class DiceBot extends GameObject {
     if (!isSecret) {
       Logger.debug('DiceCutIn: sendResultMessage cutin trigger, contextText=' + originalMessage.text);
       // 構造化データを直接イベント通知（アドバンスモード用）
+      console.log('[Tomahawk 3D Dice]', rollResult.detailedRands);
       EventSystem.trigger('DICE_CUT_IN_STRUCTURED', { rollResult: rollResult });
       // CutInLauncher経由（サイドメニューカットイン用）
       const cutInLauncher = ObjectStore.instance.get<CutInLauncher>('CutInLauncher');

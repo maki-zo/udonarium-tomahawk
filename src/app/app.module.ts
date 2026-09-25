@@ -116,7 +116,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 import { TabletopService } from 'service/tabletop.service';
 
 import { AppComponent } from './app.component';
-
+import { Dice3dOverlayComponent } from './component/dice-3d-overlay/dice-3d-overlay.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -216,7 +216,8 @@ import { AppComponent } from './app.component';
     TooltipDirective,
     DraggableDirective,
     ResizableDirective,
-    ChatInputComponent
+    ChatInputComponent,
+    Dice3dOverlayComponent
   ],
   imports: [
     BrowserModule,
@@ -235,7 +236,8 @@ import { AppComponent } from './app.component';
     GameObjectInventoryService,
     PanelService,
     PointerDeviceService,
-    TabletopService
+    TabletopService,
+   
   ],
   bootstrap: [AppComponent]
 })
