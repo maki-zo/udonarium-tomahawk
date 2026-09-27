@@ -214,6 +214,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   private lightingAnimFlagCache: { gen: number; value: boolean } = { gen: -1, value: false };
 private scratchMasks: HTMLCanvasElement[] = [];
 private exploredFogCanvas: HTMLCanvasElement | null = null;
+private exploredFogCanvasMap: Map<string, HTMLCanvasElement> = new Map();
 private fogFeatherCanvas: HTMLCanvasElement | null = null;
   private wallPenCache: { raw: string; canvas: HTMLCanvasElement } = null;
   private fogSaveTimer: any = null;
@@ -1344,22 +1345,31 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
 // Tomahawk Fog of War:
 // テーブル切替時、または共有Fogデータが更新された時に探索履歴を反映する
 if (table.roomMode === 'advanced') {
-  const fogData = table.fogOfWarData || '[]';
-  const tableChanged =
-    this.restoredFogTableId !== table.identifier;
+let fogData = table.fogOfWarData || '[]';
 
+// 卓データにFogが無い場合は、このテーブル専用の
+// localStorageバックアップを復元判定にも使用する
+if (fogData === '[]') {
+  try {
+    fogData =
+      localStorage.getItem(
+        this.getFogOfWarStorageKey(table)
+      ) || '[]';
+  } catch (_) {
+    fogData = '[]';
+  }
+}
+const tableChanged =
+  this.restoredFogTableId !== table.identifier;
   // Tomahawk Fog of War:
   // 別テーブルへ切り替えた時だけ、前のテーブルのFogを消す
-  if (tableChanged) {
-    const fogCanvas = this.getExploredFogCanvas(w, h);
-    const fogCtx = fogCanvas.getContext('2d');
+if (tableChanged) {
+  // Fog Canvasはテーブルごとに分離されているため、
+  // テーブル切替時にCanvasを消去しない。
+  this.getExploredFogCanvas(w, h);
 
-    if (fogCtx) {
-      fogCtx.clearRect(0, 0, w, h);
-    }
-
-    this.lastAppliedFogData = '';
-  }
+  this.lastAppliedFogData = '';
+}
 
   // 初回表示、または他プレイヤーから共有Fogが更新された時に反映
   if (
@@ -1535,24 +1545,43 @@ if (this.currentTable?.fogOfWarEnabled) {
     }
     return canvas;
   }
-/** Tomahawk Fog of War: 一度見た領域を保持するCanvas */
+/** Tomahawk Fog of War: テーブルごとに探索済みCanvasを保持する */
 private getExploredFogCanvas(w: number, h: number): HTMLCanvasElement {
-  if (!this.exploredFogCanvas) {
-    this.exploredFogCanvas = document.createElement('canvas');
+  const table = this.currentTable;
+
+  const tableKey = table
+    ? table.identifier
+    : 'default';
+
+  let canvas = this.exploredFogCanvasMap.get(tableKey);
+
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    this.exploredFogCanvasMap.set(tableKey, canvas);
   }
 
   if (
-    this.exploredFogCanvas.width !== w ||
-    this.exploredFogCanvas.height !== h
+    canvas.width !== w ||
+    canvas.height !== h
   ) {
-    this.exploredFogCanvas.width = w;
-    this.exploredFogCanvas.height = h;
+    canvas.width = w;
+    canvas.height = h;
   }
 
-  return this.exploredFogCanvas;
+  // 既存処理との互換用。
+  // exploredFogCanvas は「現在表示中のテーブルのCanvas」を指す。
+  this.exploredFogCanvas = canvas;
+
+  return canvas;
 }
-/** Tomahawk Fog of War: 探索済み領域をすべて消去 */
 private clearExploredFog(): void {
+  // Tomahawk Fog of War:
+  // リセット直前に予約されていた探索履歴の保存をキャンセルする
+  if (this.fogSaveTimer) {
+    clearTimeout(this.fogSaveTimer);
+    this.fogSaveTimer = null;
+  }
+
   // メモリ上の探索履歴を消去
   if (this.exploredFogCanvas) {
     const ctx = this.exploredFogCanvas.getContext('2d');
@@ -1566,24 +1595,24 @@ private clearExploredFog(): void {
       );
     }
   }
+// 保存済みの探索履歴も消去
+// リセット操作を行った時点のテーブルを対象として固定する
+const table = this.currentTable;
+if (!table) return;
 
-  // 保存済みの探索履歴も消去
-  const table = this.currentTable;
-if (table) {
-  table.fogOfWarData = '[]';
-
+table.fogOfWarData = '[]';
   // Tomahawk Fog of War:
   // ローカルバックアップも削除
   try {
     localStorage.removeItem(
-      this.getFogOfWarStorageKey()
+      this.getFogOfWarStorageKey(table)
     );
   } catch (_) {
     // localStorageが使用できない環境では何もしない
   }
+this.lastAppliedFogData = '[]';
 
   table.update();
-}
 }
 /** Tomahawk Fog of War: 探索Canvasを保存用データへ変換 */
 private createFogOfWarData(): FogOfWarData | null {
@@ -1666,8 +1695,7 @@ private mergeFogOfWarData(
   };
 }
 /** Tomahawk Fog of War: ローカル保存用の安定したキーを取得 */
-private getFogOfWarStorageKey(): string {
-  const table = this.currentTable;
+private getFogOfWarStorageKey(table = this.currentTable): string {
 
   if (!table) {
     return 'udonarium.tomahawk.fog.v1.default';
@@ -1690,11 +1718,11 @@ private restoreFogOfWarData(w: number, h: number): void {
 
   // Tomahawk Fog of War:
   // 卓データに探索履歴が無ければローカルバックアップを使用する
-  if (!serialized || serialized === '[]') {
-    try {
-      serialized = localStorage.getItem(
-        this.getFogOfWarStorageKey()
-      ) || '[]';
+if (!serialized || serialized === '[]') {
+  try {
+    serialized = localStorage.getItem(
+      this.getFogOfWarStorageKey(table)
+    ) || '[]';
     } catch (_) {
       serialized = '[]';
     }
@@ -1742,6 +1770,9 @@ private restoreFogOfWarData(w: number, h: number): void {
 }
 /** Tomahawk Fog of War: 探索履歴を遅延保存する */
 private scheduleFogOfWarSave(): void {
+  const targetTable = this.currentTable;
+  if (!targetTable) return;
+
   if (this.fogSaveTimer) {
     clearTimeout(this.fogSaveTimer);
   }
@@ -1749,8 +1780,15 @@ private scheduleFogOfWarSave(): void {
   this.fogSaveTimer = setTimeout(() => {
     this.fogSaveTimer = null;
 
-    const table = this.currentTable;
-    if (!table || !table.fogOfWarEnabled) return;
+const table = targetTable;
+
+// タイマー待機中に別テーブルへ移動していた場合は保存しない
+if (
+  this.currentTable !== table ||
+  !table.fogOfWarEnabled
+) {
+  return;
+}
 
     const localData = this.createFogOfWarData();
 if (!localData) return;
@@ -1760,8 +1798,22 @@ if (!localData) return;
 let sharedData: FogOfWarData | null = null;
 
 try {
-  const raw = table.fogOfWarData || '[]';
-  const parsed = JSON.parse(raw);
+let raw = table.fogOfWarData || '[]';
+
+// 卓データにFogが無い場合は、このテーブル専用の
+// localStorageバックアップを結合元として使用する
+if (raw === '[]') {
+  try {
+    raw =
+      localStorage.getItem(
+        this.getFogOfWarStorageKey(table)
+      ) || '[]';
+  } catch (_) {
+    raw = '[]';
+  }
+}
+
+const parsed = JSON.parse(raw);
 
   if (
     parsed &&
@@ -1790,10 +1842,10 @@ table.update();
 // Tomahawk Fog of War:
 // P2P未接続時でも探索履歴を保持するローカルバックアップ
 try {
-  localStorage.setItem(
-      this.getFogOfWarStorageKey(),
-    serialized
-  );
+localStorage.setItem(
+  this.getFogOfWarStorageKey(table),
+  serialized
+);
 } catch (_) {
   // localStorageが使用できない環境では何もしない
 }
