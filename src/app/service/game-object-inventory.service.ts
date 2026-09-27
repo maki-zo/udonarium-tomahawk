@@ -60,54 +60,78 @@ export class GameObjectInventoryService {
     this.initialize();
   }
 
-  private initialize() {
-    EventSystem.register(this)
-      .on('OPEN_NETWORK', event => { this.refresh(); })
-      .on('CONNECT_PEER', event => { this.refresh(); })
-      .on('DISCONNECT_PEER', event => { this.refresh(); })
-      .on('UPDATE_GAME_OBJECT', event => {
-        let object = ObjectStore.instance.get(event.data.identifier);
-        if (!object) return;
+private initialize() {
+  EventSystem.register(this)
+    .on('OPEN_NETWORK', event => { this.refresh(); })
+    .on('CONNECT_PEER', event => { this.refresh(); })
+    .on('DISCONNECT_PEER', event => { this.refresh(); })
+    .on('UPDATE_GAME_OBJECT', event => {
+      let object = ObjectStore.instance.get(event.data.identifier);
+      if (!object) return;
 
-        if (object instanceof GameCharacter) {
-          let prevLocation = this.locationMap.get(object.identifier);
-          if (object.location.name !== prevLocation) {
-            this.locationMap.set(object.identifier, object.location.name);
-            this.refresh();
-          }
-        } else if (object instanceof DataElement) {
-          if (!this.containsInGameCharacter(object)) return;
+      if (object instanceof GameCharacter) {
+        let prevLocation = this.locationMap.get(object.identifier);
+        if (object.location.name !== prevLocation) {
+          this.locationMap.set(object.identifier, object.location.name);
+          this.refresh();
+        }
+      } else if (object instanceof DataElement) {
+        if (!this.containsInGameCharacter(object)) return;
 
-          let prevName = this.tagNameMap.get(object.identifier);
-          if ((this.dataTags.includes(prevName) || this.dataTags.includes(object.name)) && object.name !== prevName) {
-            this.tagNameMap.set(object.identifier, object.name);
-            this.refreshDataElements();
-          }
-          if (this.sortTag === object.name || this.sortTag2nd === object.name) {
-            this.refreshSort();
-          }
-          if (0 < object.children.length) {
-            this.refreshDataElements();
-            this.refreshSort();
-          }
-          this.callInventoryUpdate();
-        } else if (object instanceof DataSummarySetting) {
-          DataSummarySetting.instance['_sortKeys'] = null; // sortKeys cache clear
+        let prevName = this.tagNameMap.get(object.identifier);
+        if (
+          (this.dataTags.includes(prevName) || this.dataTags.includes(object.name)) &&
+          object.name !== prevName
+        ) {
+          this.tagNameMap.set(object.identifier, object.name);
+          this.refreshDataElements();
+        }
+
+        const isSortTarget = [
+          this.tableInventory,
+          this.commonInventory,
+          this.privateInventory,
+          this.graveyardInventory,
+          ...this.customInventoryMap.values()
+        ].some(inventory =>
+          inventory.sortEnabled &&
+          inventory.sortKeys.some(key => key.tag === (object as DataElement).name)
+        );
+
+console.log(
+  '[Tomahawk Sort Debug]',
+  'name=', object.name,
+  'value=', object.value,
+  'currentValue=', object.currentValue,
+  'isSortTarget=', isSortTarget
+);
+
+        if (isSortTarget) {
+          this.refreshSort();
+        }
+
+        if (0 < object.children.length) {
           this.refreshDataElements();
           this.refreshSort();
-          this.callInventoryUpdate();
         }
-      })
-      .on('DELETE_GAME_OBJECT', event => {
-        this.locationMap.delete(event.data.identifier);
-        this.tagNameMap.delete(event.data.identifier);
-        this.refresh();
-      })
-      .on('SYNCHRONIZE_FILE_LIST', event => {
-        if (event.isSendFromSelf) this.callInventoryUpdate();
-      });
-  }
 
+        this.callInventoryUpdate();
+      } else if (object instanceof DataSummarySetting) {
+        DataSummarySetting.instance['_sortKeys'] = null; // sortKeys cache clear
+        this.refreshDataElements();
+        this.refreshSort();
+        this.callInventoryUpdate();
+      }
+    })
+    .on('DELETE_GAME_OBJECT', event => {
+      this.locationMap.delete(event.data.identifier);
+      this.tagNameMap.delete(event.data.identifier);
+      this.refresh();
+    })
+    .on('SYNCHRONIZE_FILE_LIST', event => {
+      if (event.isSendFromSelf) this.callInventoryUpdate();
+    });
+}
   private containsInGameCharacter(element: DataElement): boolean {
     let parent = element.parent;
     let aliasName = GameCharacter.aliasName;
