@@ -176,7 +176,7 @@ export class Network {
 
   private initializeConnection(): Connection {
     // 通信方式だけ最新版ユドナリウムのSkyWay 2023(P2P)へ戻す。
-    // リコリス側の卓改造/サーバー保存APIは残す。
+    // トマホーク側の卓改造/サーバー保存APIは残す。
     let store: Connection = new this.connectionClass();
     if (store.configure) store.configure(this.config);
     if (store.setApiKey) store.setApiKey(this.key);

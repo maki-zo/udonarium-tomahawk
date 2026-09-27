@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * ユドナリウムリコリス 掲示板APIサーバー
+ * ユドナリウムトマホーク 掲示板APIサーバー
  * /bb/api/posts/:category        GET    投稿一覧取得
  * /bb/api/posts/:category        POST   新規投稿
  * /bb/api/posts/:category/:id/replies  POST  返信

@@ -277,7 +277,7 @@ let loopCount = this.queue.size < 128 ? this.queue.size : 128;
 
 ---
 
-## 7. Lycoris（我々のプロジェクト）への示唆
+## 7. Tomahawk（我々のプロジェクト）への示唆
 
 ### ココフォリア方式の参考になる点
 - **Socket.ioの再接続設定**: `reconnection: true, transports: ["websocket"]` は良い設定

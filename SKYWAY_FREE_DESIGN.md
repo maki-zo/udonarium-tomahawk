@@ -1,4 +1,4 @@
-# Udonarium Lycoris SkyWay-free Server Design
+# ユドナリウム・トマホーク SkyWayフリー サーバー設計
 
 ## Goal
 
@@ -14,7 +14,7 @@ SkyWay を使わず、1つの自前 Node.js サーバーで以下を提供する
 
 ```text
 Browser A ─┐
-           │ HTTP: /                  ┌─ static files (dist/udonarium-lycoris)
+           │ HTTP: /                  ┌─ static files (dist/udonarium-tomahawk)
            ├ WS: /signaling ──────────┤
 Browser B ─┘                           └─ offer/answer/ice relay only
 

@@ -699,21 +699,9 @@ if (
     setTimeout(() => {
       this.panelService.open(PeerMenuComponent, { width: 500, height: 450, left: 100 });
       this.panelService.open(ChatWindowComponent, { width: 700, height: 400, left: 100, top: 450 });
-      this.showRightsNoticeOnStartup();
     }, 0);
     this.startDeveloperClientBridge();
     this.installMakoDebugDump();
-  }
-
-  private showRightsNoticeOnStartup() {
-    const text = [
-      '法令または公序良俗に違反する行為を禁止しています。',
-      '詳しくは利用規約をご一読ください。',
-      'https://udonarium-lycoris.ddns.net/docs/terms.html',
-      '',
-      'ご了承いただけたらOKを押してください。'
-    ].join('\n');
-    this.modalService.open(TextViewComponent, { title: '利用規約について', text });
   }
 
   private installMakoDebugDump() {
@@ -1307,7 +1295,7 @@ if (
       .some(note => note.title === 'アップデート内容');
     if (existing) return;
 
-    const text = `ユドナリウムリコリス v1.22.0 更新メモ
+   const text = `ユドナリウム・トマホーク v1.0.0 更新メモ
 
 ◆コマ正面マーク
 ・コマの向き（光源方向 rotate + 90）を外側の矢印で表示

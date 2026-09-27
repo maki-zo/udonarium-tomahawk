@@ -11,7 +11,7 @@ export class PaletteBrowserComponent implements OnChanges, DoCheck, OnDestroy {
   @Input() palette: ChatPalette;
   @Output() chooseLine = new EventEmitter<string>();
   @Output() sendLine = new EventEmitter<string>();
-  private static readonly dragMime = 'application/x-lycoris-palette-item';
+  private static readonly dragMime = 'application/x-tomahawk-palette-item';
   private static drag: { id: string; owner: PaletteBrowserComponent; palette: ChatPalette; source: string; start: number; end: number; text: string } = null;
   dropHint: { key: string; position: number; source: string; placement: string; label: string } = null;
   insertInside = false;
@@ -19,14 +19,14 @@ export class PaletteBrowserComponent implements OnChanges, DoCheck, OnDestroy {
   private static wrapPreference: boolean;
   get wrapLines(): boolean {
     if (PaletteBrowserComponent.wrapPreference === undefined) {
-      try { PaletteBrowserComponent.wrapPreference = localStorage.getItem('lycoris-palette-wrap-v1') !== 'false'; }
+      try { PaletteBrowserComponent.wrapPreference = localStorage.getItem('tomahawk-palette-wrap-v1') !== 'false'; }
       catch (_) { PaletteBrowserComponent.wrapPreference = true; }
     }
     return PaletteBrowserComponent.wrapPreference;
   }
   set wrapLines(value: boolean) {
     PaletteBrowserComponent.wrapPreference = value;
-    try { localStorage.setItem('lycoris-palette-wrap-v1', String(value)); } catch (_) {}
+    try { localStorage.setItem('tomahawk-palette-wrap-v1', String(value)); } catch (_) {}
   }
   query = '';
   active = -2; // all; -1 is the implicit common section
@@ -55,7 +55,7 @@ export class PaletteBrowserComponent implements OnChanges, DoCheck, OnDestroy {
     }
   }
   ngOnChanges() {
-    const key = 'lycoris-palette-view:' + (this.palette?.identifier || '');
+    const key = 'tomahawk-palette-view:' + (this.palette?.identifier || '');
     if (key === this.stateKey) return;
     this.stateKey = key;
     this.active = -2;

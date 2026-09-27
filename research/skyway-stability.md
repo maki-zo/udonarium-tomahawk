@@ -667,7 +667,7 @@ window.addEventListener('beforeunload', () => {
 
 ---
 
-## 7. Udonarium-Lycoris 移行に向けた推奨事項
+## 7. Udonarium-Tomahawk 移行に向けた推奨事項
 
 ### 7.1 SDK バージョン選定
 

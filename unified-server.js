@@ -13,7 +13,7 @@ const { WebSocketServer } = require('./signaling-server/node_modules/ws');
 
 try { require('dotenv').config({ path: path.join(__dirname, '.env') }); } catch (_) {}
 const PORT = Number(process.env.PORT || 12081);
-const WEB_ROOT = path.join(__dirname, 'dist', 'udonarium-lycoris');
+const WEB_ROOT = path.join(__dirname, 'dist', 'udonarium-tomahawk');
 const DATA_ROOT = path.join(__dirname, 'data', 'rooms');
 const MEDIA_ROOT = path.join(__dirname, 'data', 'media');
 const MEDIA_AUDIT_LOG = path.join(__dirname, 'data', 'media-audit.log');
@@ -2017,7 +2017,7 @@ process.on('SIGTERM', () => {
 
 server.listen(httpsPort || PORT, '0.0.0.0', () => {
   const scheme = httpsPort ? 'https' : 'http';
-  console.log(`Udonarium Lycoris self-hosted server on ${scheme}://0.0.0.0:${httpsPort || PORT}`);
+  console.log(`Udonarium Tomahawk self-hosted server on ${scheme}://0.0.0.0:${httpsPort || PORT}`);
   console.log(`  Web UI:    ${scheme}://0.0.0.0:${httpsPort || PORT}`);
   console.log(`  Relay WS:  ${scheme === 'https' ? 'wss' : 'ws'}://0.0.0.0:${httpsPort || PORT}/signaling`);
   console.log(`  Status:    ${scheme}://0.0.0.0:${httpsPort || PORT}/api/status`);

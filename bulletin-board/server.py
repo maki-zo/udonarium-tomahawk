@@ -8,7 +8,7 @@ import json
 import uuid
 import re
 
-app = FastAPI(title="Udonarium Lycoris Bulletin Board")
+app = FastAPI(title="Udonarium Tomahawk Bulletin Board")
 
 app.add_middleware(
     CORSMiddleware,

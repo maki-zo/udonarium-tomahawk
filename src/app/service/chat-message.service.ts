@@ -113,13 +113,13 @@ export class ChatMessageService {
       from: this.findId(sendTo),
       to: this.findId(sendTo),
       name: 'システムメッセージ',
-      imageIdentifier: '', // Lycoris
+      imageIdentifier: '',
       timestamp: this.calcTimeStamp(chatTab),
       tag: 'DiceBot to-pl-system-message',
       text: text,
-      imagePos: -1, // Lycoris
-      messColor: _color,  // Lycoris
-      sendFrom: null // Lycoris
+      imagePos: -1, 
+      messColor: _color,  
+      sendFrom: null 
     };
     return chatTab.addMessage(chatMessage);
   }
@@ -171,13 +171,13 @@ export class ChatMessageService {
       from: Network.peerContext.userId,
       to: this.findId(sendTo),
       name: this.makeMessageName(sendFrom, sendTo),
-      imageIdentifier: this.findImageIdentifier(sendFrom, imgIndex), // Lycoris
+      imageIdentifier: this.findImageIdentifier(sendFrom, imgIndex), 
       timestamp: this.calcTimeStamp(chatTab),
       tag: chatMessageTag,
       text: text,
-      imagePos: this.findImagePos(sendFrom),  // Lycoris
-      messColor: _color,  // Lycoris
-      sendFrom: sendFrom,  // Lycoris
+      imagePos: this.findImagePos(sendFrom),  
+      messColor: _color,  
+      sendFrom: sendFrom,  
     };
 
     Logger.debug(text + ' ' + sendFrom + ' ' + sendTo + ' ' + tachieNum);

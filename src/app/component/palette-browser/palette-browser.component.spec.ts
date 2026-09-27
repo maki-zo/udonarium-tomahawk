@@ -17,7 +17,7 @@ describe('Structured palette compatibility and editor', () => {
     component.ngOnChanges();
     fixture.detectChanges();
   });
-  afterEach(() => { localStorage.removeItem('lycoris-palette-view:' + palette.identifier); fixture.destroy(); });
+  afterEach(() => { localStorage.removeItem('tomahawk-palette-view:' + palette.identifier); fixture.destroy(); });
   const button = (root: HTMLElement, label: string): HTMLButtonElement => Array.from(root.querySelectorAll('button')).find(b => b.textContent.trim() === label) as HTMLButtonElement;
 
 
@@ -44,7 +44,7 @@ describe('Structured palette compatibility and editor', () => {
   });
   it('persists the display preference locally and shares it between palette views', () => {
     component.wrapLines = false;
-    expect(localStorage.getItem('lycoris-palette-wrap-v1')).toBe('false');
+    expect(localStorage.getItem('tomahawk-palette-wrap-v1')).toBe('false');
     const other = TestBed.createComponent(PaletteBrowserComponent);
     try {
       expect(other.componentInstance.wrapLines).toBeFalse();
@@ -199,7 +199,7 @@ describe('Structured palette compatibility and editor', () => {
     f.componentInstance.ngOnChanges(); f.detectChanges(); return f;
   }
   function destroySecond(f: ComponentFixture<PaletteBrowserComponent>) {
-    localStorage.removeItem('lycoris-palette-view:' + f.componentInstance.palette.identifier); f.destroy();
+    localStorage.removeItem('tomahawk-palette-view:' + f.componentInstance.palette.identifier); f.destroy();
   }
   it('moves a row down and back up via drag events without duplicating it', () => {
     palette.value = 'A\nB\nC'; fixture.detectChanges();

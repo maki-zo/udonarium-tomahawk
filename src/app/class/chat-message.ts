@@ -31,7 +31,7 @@ export interface ChatMessageContext {
 
   imagePos?: number;
   messColor?: string;
-  sendFrom?: string; // Lycoris
+  sendFrom?: string;
 
 }
 

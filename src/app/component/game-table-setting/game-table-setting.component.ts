@@ -119,7 +119,7 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
   selectedTableXml: string = '';
   tableAudioLayers: TableAudioLayerSetting[] = [];
 
-  private readonly tableOrderAttribute = 'lycorisTableOrder';
+readonly tableOrderAttribute = 'tomahawkTableOrder';
 
   get isEmpty(): boolean { return this.tableSelecter ? (this.tableSelecter.viewTable ? false : true) : true; }
   get isDeleted(): boolean {

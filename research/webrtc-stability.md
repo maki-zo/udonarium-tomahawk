@@ -1,7 +1,7 @@
 # WebRTC P2P接続の安定化ベストプラクティス（2024-2026年）
 
 > 作成日: 2026-07-13
-> 対象: Udonarium-Lycoris（ブラウザベースTRPGツール）のDataChannel通信安定化
+> 対象: Udonarium-Tomahawk（ブラウザベースTRPGツール）のDataChannel通信安定化
 
 ---
 
@@ -516,7 +516,7 @@ TRPGツールのようなテキストベース通信が中心の用途では、T
 
 ---
 
-## 6. Udonarium-Lycoris向け統合推奨事項
+## 6. Udonarium-Tomahawk向け統合推奨事項
 
 ### 6.1 最小実装チェックリスト
 

@@ -1,6 +1,6 @@
 {
-  "name": "udonarium-lycoris",
-  "version": "1.70.0-lycoris.0",
+"name": "udonarium-tomahawk",
+"version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "ng": "ng",

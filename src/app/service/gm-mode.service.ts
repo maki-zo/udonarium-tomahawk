@@ -4,7 +4,7 @@ import { EventSystem } from '@udonarium/core/system';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { Logger } from '../class/core/system/util/logger';
 
-const STORAGE_KEY = 'udonarium-lycoris.gm-mode';
+const STORAGE_KEY = 'udonarium-tomahawk.gm-mode';
 
 @Injectable({ providedIn: 'root' })
 export class GmModeService {

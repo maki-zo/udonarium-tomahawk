@@ -469,7 +469,7 @@ export class Jukebox extends GameObject {
 
   static getTableAudioLayers(table: GameTable): TableAudioLayerSetting[] {
     if (!table) return [];
-    const raw = table.getAttribute('lycorisTableAudioLayers');
+    const raw = table.getAttribute('tomahawkTableAudioLayers');
     if (!raw) return [];
     try {
       const layers = JSON.parse(raw);
@@ -482,7 +482,7 @@ export class Jukebox extends GameObject {
 
   static setTableAudioLayers(table: GameTable, layers: TableAudioLayerSetting[]) {
     if (!table) return;
-    table.setAttribute('lycorisTableAudioLayers', JSON.stringify((layers || []).map(layer => Jukebox.normalizeTableAudioLayer(layer))));
+    table.setAttribute('tomahawkTableAudioLayers', JSON.stringify((layers || []).map(layer => Jukebox.normalizeTableAudioLayer(layer))));
   }
 
   private static normalizeTableAudioLayer(layer: Partial<TableAudioLayerSetting>): TableAudioLayerSetting {

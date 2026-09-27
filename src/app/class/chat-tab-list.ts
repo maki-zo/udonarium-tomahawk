@@ -200,7 +200,7 @@ export class ChatTabList extends ObjectNode implements InnerXml {
     "    <meta charset=\"UTF-8\" />"+'\n'+
     "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />"+'\n'+
     "    <meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\" />"+'\n'+
-    "    <title>Udonarium Lycoris - logs</title>"+'\n'+
+    "    <title>Udonarium Tomahawk - logs</title>"+'\n'+
     "  </head>"+'\n'+
     "  <body>"+'\n'+
     "   "+'\n';

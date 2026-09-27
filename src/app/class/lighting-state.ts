@@ -17,7 +17,7 @@ export interface LightingEffectState {
   haze: boolean;
 }
 
-export const LIGHTING_STATE_STORAGE_KEY = 'udonarium.lycoris.lighting.state.v1';
+export const LIGHTING_STATE_STORAGE_KEY = 'udonarium.tomahawk.lighting.state.v1';
 export const LIGHTING_STATE_CHANGED = 'LIGHTING_STATE_CHANGED';
 
 export const DEFAULT_LIGHTING_STATE: LightingEffectState = {
