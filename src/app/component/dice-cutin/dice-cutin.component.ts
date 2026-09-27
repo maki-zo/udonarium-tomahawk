@@ -7,6 +7,7 @@ import { ChatMessage } from '@udonarium/chat-message';
 import { ChatTab } from '@udonarium/chat-tab';
 import { GameCharacter } from '@udonarium/game-character';
 import { GameTable } from '@udonarium/game-table';
+import { PeerCursor } from '@udonarium/peer-cursor';
 
 type DiceShape = 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20' | 'd100';
 
@@ -283,26 +284,11 @@ export class DiceCutinComponent implements OnInit, OnDestroy {
     // キャラ画像を探す
     let characterName = '';
     let characterImage = '';
-    const tabs = ObjectStore.instance.getObjects<ChatTab>(ChatTab);
-    const activeTab = tabs.length > 0 ? tabs[0] : null;
-    if (activeTab) {
-      const msgs = activeTab.chatMessages;
-      const lastMsg = msgs[msgs.length - 1];
-      if (lastMsg && lastMsg.from === 'System-BCDice') {
-        const senderName = lastMsg.name ? lastMsg.name.replace(/^<BCDice：/, '').replace(/>$/, '') : '';
-        if (senderName) {
-          const chars = ObjectStore.instance.getObjects<GameCharacter>(GameCharacter);
-          const match = chars.find(c => c.name === senderName);
-          if (match) {
-            characterName = match.name;
-            const img = match.imageFile;
-            characterImage = (img && img.url && img.url.length > 0) ? img.url : '';
-          }
-          if (!characterName) characterName = senderName;
-        }
-      }
-    }
-    if (!characterName) characterName = '???';
+    // Tomahawk: 現在のプレイヤーアイコンを使用
+characterName = PeerCursor.myCursor?.name || '';
+const playerImage = PeerCursor.myCursor?.image;
+characterImage = (playerImage && playerImage.url) ? playerImage.url : '';
+if (!characterName) characterName = '???';
 
     // 成功/失敗/クリティカル判定
     const isCritical = rollResult.isCritical || /クリティカル|Critical|critical/.test(text);
