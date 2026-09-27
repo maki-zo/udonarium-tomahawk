@@ -480,11 +480,88 @@ export class GameCharacterComponent implements OnInit, OnDestroy, AfterViewInit,
     this.contextMenuService.open(position, [
       ...(this.isAdvancedRoom ? [
         (this.isMyPiece
-          ? { name: '☑ 自分のコマ', action: () => this.toggleMyPiece(false) }
-          : { name: '☐ 自分のコマにする', action: () => this.toggleMyPiece(true) }),
-        ContextMenuSeparator
-      ] : []),
-      (this.isSimpleViewForcedFull
+    ? { name: '☑ 自分のコマ', action: () => this.toggleMyPiece(false) }
+    : { name: '☐ 自分のコマにする', action: () => this.toggleMyPiece(true) }),
+{
+  name: '💡 光源・視覚',
+  action: null,
+  subActions: [
+    (this.gameCharacter.lightSourceEnabled
+      ? {
+          name: `☑ 光源 ON（${this.gameCharacter.lightRadius}マス）`,
+          action: () => {
+            this.gameCharacter.lightSourceEnabled = false;
+            this.gameCharacter.update();
+          }
+        }
+      : {
+    name: '☐ 光源 OFF（12マス）',
+    action: () => {
+      this.gameCharacter.lightSourceEnabled = true;
+      this.gameCharacter.lightRadius = 12;
+
+      this.gameCharacter.sightEnabled = true;
+      this.gameCharacter.sightMode = 'normal';
+      this.gameCharacter.sightRadius = 12;
+
+      this.gameCharacter.update();
+    }
+  }),
+
+    ContextMenuSeparator,
+
+    {
+      name:
+        this.gameCharacter.sightEnabled &&
+        this.gameCharacter.sightMode === 'darkvision'
+          ? `● 暗視（${this.gameCharacter.sightRadius}マス）`
+          : '○ 暗視（12マス）',
+      action: () => {
+        const isActive =
+          this.gameCharacter.sightEnabled &&
+          this.gameCharacter.sightMode === 'darkvision';
+
+        if (isActive) {
+          this.gameCharacter.sightEnabled = false;
+        } else {
+          this.gameCharacter.sightEnabled = true;
+          this.gameCharacter.sightMode = 'darkvision';
+          this.gameCharacter.sightRadius = 12;
+        }
+
+        this.gameCharacter.update();
+      }
+    },
+
+    {
+      name:
+        this.gameCharacter.sightEnabled &&
+        this.gameCharacter.sightMode === 'superiorDarkvision'
+          ? `● 上位暗視（${this.gameCharacter.sightRadius}マス）`
+          : '○ 上位暗視（24マス）',
+      action: () => {
+        const isActive =
+          this.gameCharacter.sightEnabled &&
+          this.gameCharacter.sightMode === 'superiorDarkvision';
+
+        if (isActive) {
+          this.gameCharacter.sightEnabled = false;
+        } else {
+          this.gameCharacter.sightEnabled = true;
+          this.gameCharacter.sightMode = 'superiorDarkvision';
+          this.gameCharacter.sightRadius = 24;
+        }
+
+        this.gameCharacter.update();
+      }
+        }
+  ]
+},
+
+ContextMenuSeparator,
+] : []),
+
+(this.isSimpleViewForcedFull
         ? {
           name: '簡略表示に戻す', action: () => {
             this.setSimpleViewForcedFull(false);
