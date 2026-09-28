@@ -285,7 +285,7 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
     EventSystem.register(this)
       .on('UPDATE_GAME_OBJECT', event => {
         const updated = ObjectStore.instance.get(event.data.identifier);
-        if (updated instanceof GameCharacter || updated instanceof Terrain || updated instanceof GameTableMask) {
+        if (updated instanceof GameCharacter || updated instanceof Terrain || updated instanceof GameTableMask || updated instanceof Door) {
           this.objectGeneration++;
           this.invalidateLighting();
           if (!(updated instanceof GameCharacter)) this.invalidateWallGrid();
@@ -300,7 +300,7 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
       .on('DELETE_GAME_OBJECT', event => {
         // 削除済みオブジェクトはidentifierから引けないのでaliasNameで判定する
         const alias = (event.data as any)?.aliasName;
-        if (alias === GameCharacter.aliasName || alias === Terrain.aliasName || alias === GameTableMask.aliasName) {
+        if (alias === GameCharacter.aliasName || alias === Terrain.aliasName || alias === GameTableMask.aliasName || alias === Door.aliasName) {
           this.objectGeneration++;
           this.invalidateLighting();
           if (alias !== GameCharacter.aliasName) this.invalidateWallGrid();
@@ -2250,6 +2250,18 @@ localStorage.setItem(
     const versionKey = this.wallGridVersionCounter + ':' + darkness + ':' + gridSize;
     if (!this.blockerPathCache || this.blockerPathVersion !== versionKey) {
       const path = new Path2D();
+      // 閉じた扉
+const doors = ObjectStore.instance.getObjects<Door>(Door);
+for (const door of doors) {
+  if (door.isOpen || door.location.name !== 'table') continue;
+
+  path.rect(
+    door.location.x,
+    door.location.y + 5,
+    (door.width || 1) * gridSize,
+    10
+  );
+}
       // Terrain（壁）＋マップマスクの遮断矩形をまとめて焼く
       const terrains = ObjectStore.instance.getObjects<Terrain>(Terrain);
       for (const t of terrains) {
@@ -2310,8 +2322,35 @@ localStorage.setItem(
     const grid = new Uint8Array(cols * rows);
     const rects: { x1: number; y1: number; x2: number; y2: number }[] = [];
     let hasWalls = false;
+// 扉
+const doors = ObjectStore.instance.getObjects<Door>(Door)
+  .filter(door => !door.isOpen && door.location.name === 'table');
+// 閉じた扉を壁としてWallGridへ登録
+for (const door of doors) {
+  hasWalls = true;
 
-    // Terrain壁
+  const doorWidth = (door.width || 1) * gridSize;
+  const thickness = 10;
+
+  const px1 = door.location.x;
+  const py1 = door.location.y + 5;
+  const px2 = px1 + doorWidth;
+  const py2 = py1 + thickness;
+
+  rects.push({ x1: px1, y1: py1, x2: px2, y2: py2 });
+
+  const x1 = Math.max(0, Math.floor(px1 / cellSize));
+  const y1 = Math.max(0, Math.floor(py1 / cellSize));
+  const x2 = Math.min(cols, Math.ceil(px2 / cellSize));
+  const y2 = Math.min(rows, Math.ceil(py2 / cellSize));
+
+  for (let gy = y1; gy < y2; gy++) {
+    for (let gx = x1; gx < x2; gx++) {
+      grid[gy * cols + gx] = 1;
+    }
+  }
+}
+  // Terrain壁
     const terrains = ObjectStore.instance.getObjects<Terrain>(Terrain);
     for (const t of terrains) {
       if (!t.lightBlocking || t.location.name !== 'table') continue;
