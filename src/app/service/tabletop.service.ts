@@ -18,6 +18,7 @@ import { TableSelecter } from '@udonarium/table-selecter';
 import { TabletopObject } from '@udonarium/tabletop-object';
 import { RangeArea } from '@udonarium/range';
 import { Terrain } from '@udonarium/terrain';
+import { Door } from '@udonarium/door';
 import { TextNote } from '@udonarium/text-note';
 import { Logger } from '../class/core/system/util/logger';
 
@@ -60,6 +61,9 @@ export class TabletopService {
     let viewTable = this.tableSelecter.viewTable;
     return viewTable ? viewTable.terrains : [];
   });
+  private doorCache = new TabletopCache<Door>(() => {
+  return ObjectStore.instance.getObjects(Door).filter(obj => obj.isVisibleOnTable);
+});
   private textNoteCache = new TabletopCache<TextNote>(() => ObjectStore.instance.getObjects(TextNote));
   private diceSymbolCache = new TabletopCache<DiceSymbol>(() => ObjectStore.instance.getObjects(DiceSymbol));
 
@@ -71,6 +75,7 @@ export class TabletopService {
   get tableScratchMasks(): GameTableScratchMask[] { return this.tableScratchMaskCache.objects; }
   get ranges(): RangeArea[] { return this.rangeCache.objects; }
   get terrains(): Terrain[] { return this.terrainCache.objects; }
+  get doors(): Door[] { return this.doorCache.objects; }
   get textNotes(): TextNote[] { return this.textNoteCache.objects; }
   get diceSymbols(): DiceSymbol[] { return this.diceSymbolCache.objects; }
   get peerCursors(): PeerCursor[] { return ObjectStore.instance.getObjects<PeerCursor>(PeerCursor); }
@@ -89,6 +94,7 @@ export class TabletopService {
           this.refreshCache(GameTableMask.aliasName);
           this.refreshCache(GameTableScratchMask.aliasName);
           this.refreshCache(Terrain.aliasName);
+          this.refreshCache(Door.aliasName);
           return;
         }
 
@@ -301,6 +307,8 @@ export class TabletopService {
         return this.rangeCache;
       case Terrain.aliasName:
         return this.terrainCache;
+      case Door.aliasName:
+  return this.doorCache;
       case TextNote.aliasName:
         return this.textNoteCache;
       case DiceSymbol.aliasName:
@@ -324,6 +332,7 @@ export class TabletopService {
     this.tableScratchMaskCache.refresh();
     this.rangeCache.refresh();
     this.terrainCache.refresh();
+    this.doorCache.refresh();
     this.textNoteCache.refresh();
     this.diceSymbolCache.refresh();
     this.clearMap();

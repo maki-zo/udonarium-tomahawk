@@ -14,6 +14,7 @@ import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 import { RangeArea } from '@udonarium/range';
 import { Terrain } from '@udonarium/terrain';
+import { Door } from '@udonarium/door';
 import { TextNote } from '@udonarium/text-note';
 import { Logger } from '../class/core/system/util/logger';
 
@@ -100,8 +101,19 @@ export class TabletopActionService {
     viewTable.appendChild(tableMask);
     return tableMask;
   }
+createDoor(position: PointerCoordinate): Door {
+  const viewTable = this.getViewTable();
+  if (!viewTable) return;
 
+  const door = Door.create('扉', 1);
 
+  door.location.x = position.x - 25;
+  door.location.y = position.y - 5;
+  door.posZ = position.z;
+
+  viewTable.appendChild(door);
+  return door;
+}
   createTerrain(position: PointerCoordinate): Terrain {
     let url: string = './assets/images/tex.jpg';
     let image: ImageFile = ImageStorage.instance.get(url)
@@ -552,6 +564,7 @@ private consumePendingRoomMode(): 'standard' | 'advanced' {
       this.getCreateTableMaskMenu(position),
       this.getCreateLightMaskMenu(position),
       this.getCreateTerrainMenu(position),
+      this.getCreateDoorMenu(position),
       this.getCreateTextNoteMenu(position),
       this.getCreateTrumpMenu(position),
       this.getCreateDiceSymbolMenu(position),
@@ -623,6 +636,15 @@ private consumePendingRoomMode(): 'standard' | 'advanced' {
       }
     }
   }
+
+  private getCreateDoorMenu(position: PointerCoordinate): ContextMenuAction {
+  return {
+    name: '扉を作成', action: () => {
+      this.createDoor(position);
+      SoundEffect.play(PresetSound.blockPut);
+    }
+  }
+}
 
   private getCreateTextNoteMenu(position: PointerCoordinate): ContextMenuAction {
     return {

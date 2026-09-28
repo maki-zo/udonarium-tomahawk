@@ -1,0 +1,15 @@
+<div class="door-movable is-3d"
+     *ngIf="door"
+     appMovable
+     [movable.option]="movableOption"
+     style="pointer-events: none">
+
+  <div class="door-rotator is-pointer-events-auto"
+       (dblclick)="toggleDoor($event)"
+       [style.width.px]="door.width * 50"
+       [style.transform]="'rotate(' + door.rotate + 'deg)'">
+
+    <div class="door-line"></div>
+
+  </div>
+</div>

@@ -59,6 +59,7 @@ import { RangeComponent } from 'component/range/range.component';
 import { RangeDockingCharacterComponent } from 'component/range-docking-character/range-docking-character.component';
 
 import { TerrainComponent } from 'component/terrain/terrain.component';
+import { DoorComponent } from 'component/door/door.component';
 import { TextNoteComponent } from 'component/text-note/text-note.component';
 import { TextViewComponent } from 'component/text-view/text-view.component';
 import { UIPanelComponent } from 'component/ui-panel/ui-panel.component';
@@ -206,6 +207,7 @@ import { AppComponent } from './app.component';
     RangeComponent,
     RangeDockingCharacterComponent,
     TerrainComponent,
+    DoorComponent,
     PeerCursorComponent,
     TextNoteComponent,
     MovableDirective,

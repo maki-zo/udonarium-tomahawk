@@ -17,6 +17,7 @@ import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 import { RangeArea } from '@udonarium/range';
 import { Terrain } from '@udonarium/terrain';
+import { Door } from '@udonarium/door';
 import { TextNote } from '@udonarium/text-note';
 
 import { GameTableSettingComponent } from 'component/game-table-setting/game-table-setting.component';
@@ -251,6 +252,7 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
   get cardStacks(): CardStack[] { return this.tabletopService.cardStacks; }
   get ranges(): RangeArea[] { return this.tabletopService.ranges; }
   get terrains(): Terrain[] { return this.tabletopService.terrains; }
+  get doors(): Door[] { return this.tabletopService.doors; }
   get textNotes(): TextNote[] { return this.tabletopService.textNotes; }
   get diceSymbols(): DiceSymbol[] { return this.tabletopService.diceSymbols; }
   get peerCursors(): PeerCursor[] { return this.tabletopService.peerCursors; }
