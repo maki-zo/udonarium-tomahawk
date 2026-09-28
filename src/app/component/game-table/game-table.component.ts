@@ -2251,16 +2251,30 @@ localStorage.setItem(
     if (!this.blockerPathCache || this.blockerPathVersion !== versionKey) {
       const path = new Path2D();
       // 閉じた扉
+// 閉じた扉
 const doors = ObjectStore.instance.getObjects<Door>(Door);
 for (const door of doors) {
   if (door.isOpen || door.location.name !== 'table') continue;
 
-  path.rect(
-    door.location.x,
-    door.location.y + 5,
-    (door.width || 1) * gridSize,
-    10
-  );
+  const doorWidth = (door.width || 1) * gridSize;
+
+  if (door.rotate === 90) {
+    // 縦向き
+    path.rect(
+      door.location.x - 5,
+      door.location.y,
+      10,
+      doorWidth
+    );
+  } else {
+    // 横向き
+    path.rect(
+      door.location.x,
+      door.location.y + 5,
+      doorWidth,
+      10
+    );
+  }
 }
       // Terrain（壁）＋マップマスクの遮断矩形をまとめて焼く
       const terrains = ObjectStore.instance.getObjects<Terrain>(Terrain);
@@ -2329,13 +2343,41 @@ const doors = ObjectStore.instance.getObjects<Door>(Door)
 for (const door of doors) {
   hasWalls = true;
 
-  const doorWidth = (door.width || 1) * gridSize;
-  const thickness = 10;
+const doorWidth = (door.width || 1) * gridSize;
+const thickness = 10;
 
-  const px1 = door.location.x;
-  const py1 = door.location.y + 5;
-  const px2 = px1 + doorWidth;
-  const py2 = py1 + thickness;
+let px1: number;
+let py1: number;
+let px2: number;
+let py2: number;
+
+if (door.rotate === 90) {
+  // 縦向き
+  px1 = door.location.x - 5;
+  py1 = door.location.y;
+  px2 = px1 + thickness;
+  py2 = py1 + doorWidth;
+} else {
+  // 横向き
+  px1 = door.location.x;
+  py1 = door.location.y + 5;
+  px2 = px1 + doorWidth;
+  py2 = py1 + thickness;
+}
+
+if (door.rotate === 90) {
+  // 縦向き
+  px1 = door.location.x - 5;
+  py1 = door.location.y;
+  px2 = px1 + thickness;
+  py2 = py1 + doorWidth;
+} else {
+  // 横向き
+  px1 = door.location.x;
+  py1 = door.location.y + 5;
+  px2 = px1 + doorWidth;
+  py2 = py1 + thickness;
+}
 
   rects.push({ x1: px1, y1: py1, x2: px2, y2: py2 });
 

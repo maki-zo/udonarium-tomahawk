@@ -40,8 +40,15 @@ onContextMenu(event: MouseEvent): void {
   const menuPosition = this.pointerDeviceService.pointers[0];
 
   this.contextMenuService.open(menuPosition, [
+     {
+  name: '扉を90°回転',
+  action: () => {
+    this.door.rotate = (this.door.rotate + 90) % 180;
+    this.door.update();
+  }
+},
     {
-      name: '扉を削除',
+        name: '扉を削除',
       action: () => {
         this.door.destroy();
       }
@@ -53,7 +60,6 @@ onContextMenu(event: MouseEvent): void {
   event.stopPropagation();
 
   this.door.isOpen = !this.door.isOpen;
-  this.door.rotate = this.door.isOpen ? -90 : 0;
   this.door.update();
 }
 }

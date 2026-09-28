@@ -7,7 +7,7 @@
   <div class="door-rotator is-pointer-events-auto"
        (dblclick)="toggleDoor($event)"
        [style.width.px]="door.width * 50"
-       [style.transform]="'rotate(' + door.rotate + 'deg)'">
+       [style.transform]="'rotate(' + (door.rotate + (door.isOpen ? -90 : 0)) + 'deg)'">
 
     <div class="door-line"></div>
 
