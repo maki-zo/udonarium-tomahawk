@@ -5,6 +5,15 @@
 [style.background-image]="'url(' + backgroundImage.url + ')' | safe: 'style'"
 [style.--bg-darkness]="isLightingActive && !isGmMode ? currentTable.lightingIntensity : 0"></div>
 </div>
+<div *ngIf="currentTable?.parallaxMidgroundEnabled"
+     class="parallax-midground-layer is-pointer-events-none"
+     #parallaxMidground>
+
+  <div class="midground-image"
+       [style.background-image]="'url(' + midgroundImage.url + ')' | safe: 'style'">
+  </div>
+
+</div>
 <div class="component is-fill is-perspective" [ngClass]="{'is-grabbing': isPointerDragging, 'is-flat-mode': isFlatMode}" #root>
   <div class="component-content is-fill is-3d-2" #gameTable>
     <div id="app-game-table" class="game-table table-image is-3d-2" [style.background-image]="layerVisibility.tableImage ? ('url(' + tableImage.url + ')' | safe: 'style') : 'none'" #gameObjects>

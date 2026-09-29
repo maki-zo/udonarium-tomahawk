@@ -78,6 +78,11 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
   get tableDistanceviewImage(): ImageFile {
     return this.imageService.getEmptyOr(this.selectedTable ? this.selectedTable.backgroundImageIdentifier : null);
   }
+  get tableMidgroundImage(): ImageFile {
+  return this.imageService.getEmptyOr(
+    this.selectedTable ? this.selectedTable.midgroundImageIdentifier : null
+  );
+}
 
   // 全体強制ONしたときのグリッド表示信号発行のためのダミー
   get tableGridDummy(): boolean { return this.tableSelecter.tableGridDummy; }
@@ -121,6 +126,17 @@ get tableParallaxBackgroundEnabled(): boolean {
 set tableParallaxBackgroundEnabled(enabled: boolean) {
   if (this.isEditable && this.selectedTable) {
     this.selectedTable.parallaxBackgroundEnabled = enabled;
+  }
+}
+get tableParallaxMidgroundEnabled(): boolean {
+  return this.selectedTable
+    ? this.selectedTable.parallaxMidgroundEnabled
+    : false;
+}
+
+set tableParallaxMidgroundEnabled(enabled: boolean) {
+  if (this.isEditable && this.selectedTable) {
+    this.selectedTable.parallaxMidgroundEnabled = enabled;
   }
 }
   get tableDistanceviewFilter(): FilterType { return this.selectedTable.backgroundFilterType; }
@@ -351,4 +367,11 @@ readonly tableOrderAttribute = 'tomahawkTableOrder';
       this.selectedTable.backgroundImageIdentifier = value;
     });
   }
+openMidgroundImageModal() {
+  if (this.isDeleted) return;
+  this.modalService.open<string>(FileSelecterComponent, { isAllowedEmpty: true }).then(value => {
+    if (!this.selectedTable || !value) return;
+    this.selectedTable.midgroundImageIdentifier = value;
+  });
+}  
 }

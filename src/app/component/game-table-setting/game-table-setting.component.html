@@ -97,6 +97,20 @@
                 <img height="120" [src]="tableDistanceviewImage.url | safe: 'resourceUrl'">
               </div>
             </div>
+            <div>
+  中景
+  <div *ngIf="!tableMidgroundImage.url">
+    <button (click)="openMidgroundImageModal()" style="height: 120px;">
+      中景画像を追加
+    </button>
+  </div>
+
+  <div *ngIf="tableMidgroundImage.url"
+       (click)="openMidgroundImageModal()">
+    <img height="120"
+         [src]="tableMidgroundImage.url | safe: 'resourceUrl'">
+  </div>
+</div>
           </div>
 
           <div class="table-effect-settings">
@@ -124,6 +138,13 @@
          name="tableParallaxBackgroundEnabled"
          [disabled]="!isEditable">
   背景パララックス
+</label>
+<label>
+  <input type="checkbox"
+         [(ngModel)]="tableParallaxMidgroundEnabled"
+         name="tableParallaxMidgroundEnabled"
+         [disabled]="!isEditable">
+  中景パララックス
 </label>
   </div>
 </div>

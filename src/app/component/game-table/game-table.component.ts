@@ -127,6 +127,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('lightingCanvas', { static: true }) lightingCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('weatherCanvas', { static: true }) weatherCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('parallaxBackground', { static: true }) parallaxBackground!: ElementRef<HTMLDivElement>;
+  @ViewChild('parallaxMidground', { static: false }) parallaxMidground!: ElementRef<HTMLDivElement>;
 
   get tableSelecter(): TableSelecter { return this.tabletopService.tableSelecter; }
   get currentTable(): GameTable { return this.tabletopService.currentTable; }
@@ -138,6 +139,10 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   get backgroundImage(): ImageFile {
     return this.imageService.getEmptyOr(this.currentTable.backgroundImageIdentifier);
   }
+
+  get midgroundImage(): ImageFile {
+  return this.imageService.getEmptyOr(this.currentTable.midgroundImageIdentifier);
+}
 
   get backgroundFilterType(): FilterType {
     return this.currentTable.backgroundFilterType;
@@ -1087,6 +1092,26 @@ if (this.parallaxBackground?.nativeElement) {
       `rotateZ(${parallaxRotateZ.toFixed(2)}deg)`;
   } else {
     this.parallaxBackground.nativeElement.style.transform = 'none';
+  }
+}
+// 中景パララックス
+const midgroundX = this.viewPotisonX * 0.35;
+const midgroundY = this.viewPotisonY * 0.35;
+
+const midgroundRotateX = this.viewRotateX * 0.30;
+const midgroundRotateY = this.viewRotateY * 0.30;
+const midgroundRotateZ = this.viewRotateZ * 0.30;
+
+if (this.parallaxMidground?.nativeElement) {
+  if (this.currentTable?.parallaxMidgroundEnabled) {
+    this.parallaxMidground.nativeElement.style.transform =
+      `translateX(${midgroundX.toFixed(2)}px) ` +
+      `translateY(${midgroundY.toFixed(2)}px) ` +
+      `rotateX(${midgroundRotateX.toFixed(2)}deg) ` +
+      `rotateY(${midgroundRotateY.toFixed(2)}deg) ` +
+      `rotateZ(${midgroundRotateZ.toFixed(2)}deg)`;
+  } else {
+    this.parallaxMidground.nativeElement.style.transform = 'none';
   }
 }
 }

@@ -28,6 +28,7 @@ export class GameTable extends ObjectNode {
   @SyncVar() gridSize: number = 50;
   @SyncVar() imageIdentifier: string = 'imageIdentifier';
   @SyncVar() backgroundImageIdentifier: string = 'imageIdentifier';
+  @SyncVar() midgroundImageIdentifier: string = 'imageIdentifier';
   @SyncVar() backgroundFilterType: FilterType = FilterType.NONE;
   @SyncVar() selected: boolean = false;
   @SyncVar() gridType: GridType = GridType.SQUARE;
@@ -59,6 +60,7 @@ export class GameTable extends ObjectNode {
   @SyncVar() fogOfWarData: string = '[]'; // Tomahawk：探索済み領域データ
   @SyncVar() weatherType: string = 'none'; // Tomahawk：天候（none / rain / thunderstorm / snow / fog / embers）
   @SyncVar() parallaxBackgroundEnabled: boolean = false;
+  @SyncVar() parallaxMidgroundEnabled: boolean = false;
   @SyncVar() initialObjectsPlaced: boolean = false;
   @SyncVar() diceCutinEnabled: boolean = true;
   @SyncVar() extendedDiceBotEnabled: boolean = false;
