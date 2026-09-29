@@ -126,6 +126,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('drawingCanvas', { static: true }) drawingCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('lightingCanvas', { static: true }) lightingCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('weatherCanvas', { static: true }) weatherCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('parallaxBackground', { static: true }) parallaxBackground!: ElementRef<HTMLDivElement>;
 
   get tableSelecter(): TableSelecter { return this.tabletopService.tableSelecter; }
   get currentTable(): GameTable { return this.tabletopService.currentTable; }
@@ -1055,10 +1056,40 @@ ctx.fill();
     });
   }
 
-  private applyTableTransform() {
-    const scale = this.isFlatMode ? ` scale(${this.flatViewScale.toFixed(4)})` : '';
-    this.gameTable.nativeElement.style.transform = `translateZ(${this.viewPotisonZ.toFixed(4)}px) translateY(${this.viewPotisonY.toFixed(4)}px) translateX(${this.viewPotisonX.toFixed(4)}px) rotateY(${this.viewRotateY.toFixed(4)}deg) rotateX(${this.viewRotateX.toFixed(4) + 'deg) rotateZ(' + this.viewRotateZ.toFixed(4)}deg)${scale}`;
+private applyTableTransform() {
+  const scale = this.isFlatMode ? ` scale(${this.flatViewScale.toFixed(4)})` : '';
+
+  // 従来のゲームテーブル
+  this.gameTable.nativeElement.style.transform =
+    `translateZ(${this.viewPotisonZ.toFixed(4)}px) ` +
+    `translateY(${this.viewPotisonY.toFixed(4)}px) ` +
+    `translateX(${this.viewPotisonX.toFixed(4)}px) ` +
+    `rotateY(${this.viewRotateY.toFixed(4)}deg) ` +
+    `rotateX(${this.viewRotateX.toFixed(4)}deg) ` +
+    `rotateZ(${this.viewRotateZ.toFixed(4)}deg)` +
+    `${scale}`;
+
+  // Tomahawk：遠景は盤面より弱く追従させる
+const parallaxX = this.viewPotisonX * 0.12;
+const parallaxY = this.viewPotisonY * 0.12;
+
+const parallaxRotateX = this.viewRotateX * 0.18;
+const parallaxRotateY = this.viewRotateY * 0.18;
+const parallaxRotateZ = this.viewRotateZ * 0.18;
+
+if (this.parallaxBackground?.nativeElement) {
+  if (this.currentTable?.parallaxBackgroundEnabled) {
+    this.parallaxBackground.nativeElement.style.transform =
+      `translateX(${parallaxX.toFixed(2)}px) ` +
+      `translateY(${parallaxY.toFixed(2)}px) ` +
+      `rotateX(${parallaxRotateX.toFixed(2)}deg) ` +
+      `rotateY(${parallaxRotateY.toFixed(2)}deg) ` +
+      `rotateZ(${parallaxRotateZ.toFixed(2)}deg)`;
+  } else {
+    this.parallaxBackground.nativeElement.style.transform = 'none';
   }
+}
+}
 
   private setGameTableGrid(width: number, height: number, gridSize: number = 50, gridType: GridType = GridType.SQUARE, gridColor: string = '#000000e6') {
     

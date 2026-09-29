@@ -406,3 +406,15 @@
   pointer-events: none;
   z-index: 1000;
 }
+.parallax-background-layer {
+  position: absolute;
+  left: -3%;
+  top: -3%;
+  width: 106%;
+  height: 106%;
+
+  transform-origin: center center;
+
+  pointer-events: none;
+  overflow: hidden;
+}

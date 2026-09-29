@@ -112,7 +112,17 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
 
   get tableWeatherType(): string { return this.selectedTable ? this.selectedTable.weatherType : 'none'; }
   set tableWeatherType(weatherType: string) { if (this.isEditable) this.selectedTable.weatherType = weatherType; }
+get tableParallaxBackgroundEnabled(): boolean {
+  return this.selectedTable
+    ? this.selectedTable.parallaxBackgroundEnabled
+    : false;
+}
 
+set tableParallaxBackgroundEnabled(enabled: boolean) {
+  if (this.isEditable && this.selectedTable) {
+    this.selectedTable.parallaxBackgroundEnabled = enabled;
+  }
+}
   get tableDistanceviewFilter(): FilterType { return this.selectedTable.backgroundFilterType; }
   set tableDistanceviewFilter(filterType: FilterType) { if (this.isEditable) this.selectedTable.backgroundFilterType = filterType; }
 

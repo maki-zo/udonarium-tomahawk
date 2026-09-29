@@ -1,6 +1,10 @@
-<div *ngIf="layerVisibility.background" class="background-image is-pointer-events-none" [ngClass]="[(backgroundFilterType ? 'is-filter' : ''), backgroundFilterType, isLightingActive ? 'is-night' : '']" 
+<div class="parallax-background-layer is-pointer-events-none" #parallaxBackground>
+  <div *ngIf="layerVisibility.background"
+       class="background-image is-pointer-events-none"
+ [ngClass]="[(backgroundFilterType ? 'is-filter' : ''), backgroundFilterType, isLightingActive ? 'is-night' : '']" 
 [style.background-image]="'url(' + backgroundImage.url + ')' | safe: 'style'"
 [style.--bg-darkness]="isLightingActive && !isGmMode ? currentTable.lightingIntensity : 0"></div>
+</div>
 <div class="component is-fill is-perspective" [ngClass]="{'is-grabbing': isPointerDragging, 'is-flat-mode': isFlatMode}" #root>
   <div class="component-content is-fill is-3d-2" #gameTable>
     <div id="app-game-table" class="game-table table-image is-3d-2" [style.background-image]="layerVisibility.tableImage ? ('url(' + tableImage.url + ')' | safe: 'style') : 'none'" #gameObjects>

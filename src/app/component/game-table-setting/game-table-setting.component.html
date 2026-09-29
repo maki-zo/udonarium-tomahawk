@@ -118,6 +118,13 @@
         <option value="embers">火の粉</option>
       </select>
     </label>
+    <label>
+  <input type="checkbox"
+         [(ngModel)]="tableParallaxBackgroundEnabled"
+         name="tableParallaxBackgroundEnabled"
+         [disabled]="!isEditable">
+  背景パララックス
+</label>
   </div>
 </div>
 <div class="table-audio-settings">
