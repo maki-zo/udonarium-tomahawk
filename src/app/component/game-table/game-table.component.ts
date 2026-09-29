@@ -1075,41 +1075,43 @@ private applyTableTransform() {
     `${scale}`;
 
   // Tomahawk：遠景は盤面より弱く追従させる
-const parallaxX = this.viewPotisonX * 0.12;
-const parallaxY = this.viewPotisonY * 0.12;
+const rotationPanX = Math.max(-60, Math.min(60, this.viewRotateZ * 2.0));
+const rotationPanY =
+  Math.max(-60, Math.min(60, (this.viewRotateX - 50) * 2.0));
 
-const parallaxRotateX = this.viewRotateX * 0.18;
-const parallaxRotateY = this.viewRotateY * 0.18;
-const parallaxRotateZ = this.viewRotateZ * 0.18;
+const parallaxX =
+  (this.viewPotisonX * 0.12) + rotationPanX;
+
+const parallaxY =
+  (this.viewPotisonY * 0.12) + rotationPanY;
 
 if (this.parallaxBackground?.nativeElement) {
   if (this.currentTable?.parallaxBackgroundEnabled) {
     this.parallaxBackground.nativeElement.style.transform =
       `translateX(${parallaxX.toFixed(2)}px) ` +
-      `translateY(${parallaxY.toFixed(2)}px) ` +
-      `rotateX(${parallaxRotateX.toFixed(2)}deg) ` +
-      `rotateY(${parallaxRotateY.toFixed(2)}deg) ` +
-      `rotateZ(${parallaxRotateZ.toFixed(2)}deg)`;
+      `translateY(${parallaxY.toFixed(2)}px) ` ;
   } else {
     this.parallaxBackground.nativeElement.style.transform = 'none';
   }
 }
 // 中景パララックス
-const midgroundX = this.viewPotisonX * 0.35;
-const midgroundY = this.viewPotisonY * 0.35;
+const midgroundRotationPanX =
+  Math.max(-100, Math.min(100, this.viewRotateZ * 3.5));
 
-const midgroundRotateX = this.viewRotateX * 0.30;
-const midgroundRotateY = this.viewRotateY * 0.30;
-const midgroundRotateZ = this.viewRotateZ * 0.30;
+const midgroundRotationPanY =
+  Math.max(-100, Math.min(100, (this.viewRotateX - 50) * 3.5));
+
+const midgroundX =
+  (this.viewPotisonX * 0.35) + midgroundRotationPanX;
+
+const midgroundY =
+  (this.viewPotisonY * 0.35) + midgroundRotationPanY;
 
 if (this.parallaxMidground?.nativeElement) {
   if (this.currentTable?.parallaxMidgroundEnabled) {
     this.parallaxMidground.nativeElement.style.transform =
       `translateX(${midgroundX.toFixed(2)}px) ` +
-      `translateY(${midgroundY.toFixed(2)}px) ` +
-      `rotateX(${midgroundRotateX.toFixed(2)}deg) ` +
-      `rotateY(${midgroundRotateY.toFixed(2)}deg) ` +
-      `rotateZ(${midgroundRotateZ.toFixed(2)}deg)`;
+      `translateY(${midgroundY.toFixed(2)}px) ` ;
   } else {
     this.parallaxMidground.nativeElement.style.transform = 'none';
   }
