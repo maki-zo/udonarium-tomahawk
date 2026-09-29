@@ -58,6 +58,7 @@
       <canvas class="drawing-canvas is-fill" [class.is-drawing-mode]="isDrawingMode" #drawingCanvas
         (pointerdown)="onDrawingPointerDown($event)" (pointermove)="onDrawingPointerMove($event)"></canvas>
       <canvas class="lighting-canvas" #lightingCanvas [hidden]="!isLightingActive && !isAdvancedVisionActive"></canvas>
+      <canvas class="weather-canvas is-pointer-events-none" #weatherCanvas></canvas>
     </div>
   </div>
   <ng-container *ngIf="isSideNameLabelMode">
@@ -105,6 +106,7 @@
         <label><input type="checkbox" [checked]="layerVisibility.lighting" (change)="toggleLayerVisibility('lighting')">照明</label>
       </div>
     </ng-container>
+
     <button type="button" class="toolbar-toggle" (click)="toggleDrawingTool()">ペン</button>
     <ng-container *ngIf="isDrawingToolOpen">
       <button type="button" [class.active]="isDrawingMode" (click)="toggleDrawingMode()">{{isDrawingMode ? '描画ON' : '描画OFF'}}</button>

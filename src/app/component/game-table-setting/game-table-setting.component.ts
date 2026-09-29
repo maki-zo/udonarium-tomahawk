@@ -110,6 +110,9 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
   get tableGridType(): GridType { return this.selectedTable.gridType; }
   set tableGridType(gridType: GridType) { if (this.isEditable) this.selectedTable.gridType = Number(gridType); }
 
+  get tableWeatherType(): string { return this.selectedTable ? this.selectedTable.weatherType : 'none'; }
+  set tableWeatherType(weatherType: string) { if (this.isEditable) this.selectedTable.weatherType = weatherType; }
+
   get tableDistanceviewFilter(): FilterType { return this.selectedTable.backgroundFilterType; }
   set tableDistanceviewFilter(filterType: FilterType) { if (this.isEditable) this.selectedTable.backgroundFilterType = filterType; }
 

@@ -98,10 +98,29 @@
               </div>
             </div>
           </div>
-          <div class="table-name-row">Name :
-            <input class="is-caret" [(ngModel)]="tableName" placeholder="Name" [attr.disabled]="!isEditable ? '' : null" />
-          </div>
-          <div class="table-audio-settings">
+
+          <div class="table-effect-settings">
+  <div class="table-effect-header">
+    <b>演出設定</b>
+  </div>
+
+  <div class="table-effect-body">
+    <label>
+      天候：
+      <select [(ngModel)]="tableWeatherType"
+              name="tableWeatherType"
+              [attr.disabled]="!isEditable ? '' : null">
+        <option value="none">なし</option>
+        <option value="rain">雨</option>
+        <option value="thunderstorm">雷雨</option>
+        <option value="snow">雪</option>
+        <option value="fog">霧</option>
+        <option value="embers">火の粉</option>
+      </select>
+    </label>
+  </div>
+</div>
+<div class="table-audio-settings">
             <div class="table-audio-header">
               <b>テーブルBGM/環境音</b>
               <span class="small-note">切替時に自動再生</span>

@@ -125,6 +125,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('gridCanvas', { static: true }) gridCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('drawingCanvas', { static: true }) drawingCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('lightingCanvas', { static: true }) lightingCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('weatherCanvas', { static: true }) weatherCanvas!: ElementRef<HTMLCanvasElement>;
 
   get tableSelecter(): TableSelecter { return this.tabletopService.tableSelecter; }
   get currentTable(): GameTable { return this.tabletopService.currentTable; }
@@ -221,6 +222,13 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
   private fogSaveTimer: any = null;
   private restoredFogTableId: string = '';
   private lastAppliedFogData: string = '';
+  private weatherAnimFrame: number = null;
+  private rainDrops: {
+  x: number;
+  y: number;
+  length: number;
+  speed: number;
+}[] = [];
   get isLightingActive(): boolean {
     return this.currentTable?.lightingEnabled && this.currentTable?.lightingNightMode;
   }
@@ -293,9 +301,10 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
         if (event.data.identifier !== this.currentTable.identifier && event.data.identifier !== this.tableSelecter.identifier) return;
         Logger.debug('UPDATE_GAME_OBJECT GameTableComponent ' + this.currentTable.identifier);
         this.setGameTableGrid(this.currentTable.width, this.currentTable.height, this.currentTable.gridSize, this.currentTable.gridType, this.currentTable.gridColor);
-        this.redrawDrawingCanvas();
-        this.invalidateWallGrid();
-        this.invalidateLighting();
+      this.redrawDrawingCanvas();
+this.invalidateWallGrid();
+this.invalidateLighting();
+this.refreshWeather();
       })
       .on('DELETE_GAME_OBJECT', event => {
         // 削除済みオブジェクトはidentifierから引けないのでaliasNameで判定する
@@ -407,6 +416,7 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
     this.setTransform(0, 0, 0, 0, 0, 0);
     this.coordinateService.tabletopOriginElement = this.gameObjects.nativeElement;
     this.ngZone.runOutsideAngular(() => this.startLightingLoop());
+    this.ngZone.runOutsideAngular(() => this.startWeatherRain());
   }
 
   private static loadLayerVisibility(): TableLayerVisibility {
@@ -420,7 +430,7 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
   }
 
   isLayerPanelOpen: boolean = false;
-
+  isWeatherPanelOpen: boolean = false;
   toggleLayerVisibility(key: keyof TableLayerVisibility) {
     this.layerVisibility[key] = !this.layerVisibility[key];
     try { localStorage.setItem(GameTableComponent.LAYER_VISIBILITY_KEY, JSON.stringify(this.layerVisibility)); } catch (_) {}
@@ -429,13 +439,367 @@ private fogFeatherCanvas: HTMLCanvasElement | null = null;
     this.changeDetector.markForCheck();
   }
 
-  ngOnDestroy() {
-    EventSystem.unregister(this);
-    this.mouseGesture.destroy();
-    this.touchGesture.destroy();
-    if (this.lightingAnimFrame) cancelAnimationFrame(this.lightingAnimFrame);
+ngOnDestroy() {
+  EventSystem.unregister(this);
+  this.mouseGesture.destroy();
+  this.touchGesture.destroy();
+  if (this.lightingAnimFrame) cancelAnimationFrame(this.lightingAnimFrame);
+  if (this.weatherAnimFrame) cancelAnimationFrame(this.weatherAnimFrame);
+}
+private refreshWeather(): void {
+  if (this.weatherAnimFrame) {
+    cancelAnimationFrame(this.weatherAnimFrame);
+    this.weatherAnimFrame = null;
   }
 
+  const canvas = this.weatherCanvas?.nativeElement;
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  const type = this.currentTable?.weatherType || 'none';
+
+if (type === 'rain' || type === 'thunderstorm') {
+  this.ngZone.runOutsideAngular(() => this.startWeatherRain());
+}
+
+if (type === 'snow') {
+  this.ngZone.runOutsideAngular(() => this.startWeatherSnow());
+}
+
+if (type === 'fog') {
+  this.ngZone.runOutsideAngular(() => this.startWeatherFog());
+}
+
+if (type === 'embers') {
+  this.ngZone.runOutsideAngular(() => this.startWeatherEmbers());
+}
+
+}
+setWeatherType(type: string): void {
+  const table = this.currentTable;
+  if (!table) return;
+
+  table.weatherType = type;
+  table.update();
+
+  this.refreshWeather();
+}
+private startWeatherRain(): void {
+  const canvas = this.weatherCanvas?.nativeElement;
+  const isThunderstorm = this.currentTable?.weatherType === 'thunderstorm';
+  if (this.currentTable.weatherType !== 'rain' &&
+      this.currentTable.weatherType !== 'thunderstorm') {
+    const ctx = canvas?.getContext('2d');
+    if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+
+  canvas.width = width;
+  canvas.height = height;
+
+  // 雨粒を初期生成
+  this.rainDrops = [];
+  const dropCount = Math.max(80, Math.floor((width * height) / 12000));
+
+  for (let i = 0; i < dropCount; i++) {
+    this.rainDrops.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      length: 10 + Math.random() * 15,
+      speed: 8 + Math.random() * 8
+    });
+  }
+let lightningFlash = 0;
+let nextLightning = performance.now() + 2000 + Math.random() * 5000;
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+const now = performance.now();
+
+if (isThunderstorm && now >= nextLightning) {
+  lightningFlash = 1;
+  nextLightning = now + 3000 + Math.random() * 7000;
+}
+
+if (lightningFlash > 0.02) {
+  ctx.fillStyle = `rgba(220, 235, 255, ${lightningFlash * 0.35})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  lightningFlash *= 0.72;
+}
+    ctx.strokeStyle = 'rgba(190, 220, 255, 0.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+
+    for (const drop of this.rainDrops) {
+if (isThunderstorm) {
+  // 雷雨：強風で横殴り
+  ctx.moveTo(drop.x, drop.y);
+  ctx.lineTo(drop.x - drop.length * 0.9, drop.y + drop.length);
+
+  drop.x -= drop.speed * 0.75;
+  drop.y += drop.speed;
+} else {
+  // 通常の雨
+  ctx.moveTo(drop.x, drop.y);
+  ctx.lineTo(drop.x - 4, drop.y + drop.length);
+
+  drop.x -= 2;
+  drop.y += drop.speed;
+}
+
+if (drop.y > canvas.height || drop.x < -50) {
+  if (isThunderstorm) {
+    // 上端だけでなく右端からも吹き込ませる
+    if (Math.random() < 0.5) {
+      drop.x = Math.random() * canvas.width + 100;
+      drop.y = -drop.length;
+    } else {
+      drop.x = canvas.width + drop.length;
+      drop.y = Math.random() * canvas.height * 0.6;
+    }
+  } else {
+    drop.x = Math.random() * canvas.width + 20;
+    drop.y = -drop.length;
+  }
+}
+    }
+
+    ctx.stroke();
+
+    this.weatherAnimFrame = requestAnimationFrame(draw);
+  };
+
+  if (this.weatherAnimFrame) {
+    cancelAnimationFrame(this.weatherAnimFrame);
+  }
+
+  draw();
+}
+private startWeatherSnow(): void {
+  const canvas = this.weatherCanvas?.nativeElement;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const flakes = Array.from({ length: Math.max(60, Math.floor((width * height) / 16000)) }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    size: 1.5 + Math.random() * 3,
+    speed: 0.6 + Math.random() * 1.4,
+    drift: Math.random() * Math.PI * 2
+  }));
+
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+
+    for (const flake of flakes) {
+      flake.drift += 0.02;
+
+      flake.x += Math.sin(flake.drift) * 0.5;
+      flake.y += flake.speed;
+
+      ctx.beginPath();
+      ctx.arc(flake.x, flake.y, flake.size, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (flake.y > canvas.height + 5) {
+        flake.y = -5;
+        flake.x = Math.random() * canvas.width;
+      }
+
+      if (flake.x < -10) flake.x = canvas.width + 10;
+      if (flake.x > canvas.width + 10) flake.x = -10;
+    }
+
+    this.weatherAnimFrame = requestAnimationFrame(draw);
+  };
+
+  draw();
+}
+private startWeatherFog(): void {
+  const canvas = this.weatherCanvas?.nativeElement;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const fogBanks = Array.from({ length: 8 }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    radiusX: 180 + Math.random() * 260,
+    radiusY: 50 + Math.random() * 100,
+    speed: 0.15 + Math.random() * 0.25,
+    opacity: 0.32 + Math.random() * 0.12
+  }));
+
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const fog of fogBanks) {
+      fog.x += fog.speed;
+
+      if (fog.x - fog.radiusX > canvas.width) {
+        fog.x = -fog.radiusX;
+        fog.y = Math.random() * canvas.height;
+      }
+
+      const gradient = ctx.createRadialGradient(
+        fog.x, fog.y, 0,
+        fog.x, fog.y, fog.radiusX
+      );
+
+      gradient.addColorStop(
+        0,
+        `rgba(225, 235, 240, ${fog.opacity})`
+      );
+      gradient.addColorStop(
+        0.55,
+        `rgba(225, 235, 240, ${fog.opacity * 0.65})`
+      );
+      gradient.addColorStop(
+        1,
+        'rgba(225, 235, 240, 0)'
+      );
+
+      ctx.save();
+
+      ctx.translate(fog.x, fog.y);
+      ctx.scale(1, fog.radiusY / fog.radiusX);
+      ctx.translate(-fog.x, -fog.y);
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(fog.x, fog.y, fog.radiusX, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    this.weatherAnimFrame = requestAnimationFrame(draw);
+  };
+
+  draw();
+}
+private startWeatherEmbers(): void {
+  const canvas = this.weatherCanvas?.nativeElement;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const embers = Array.from({
+    length: Math.max(70, Math.floor((width * height) / 12000))
+  }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    size: 1 + Math.random() * 2.5,
+    speed: 0.5 + Math.random() * 1.5,
+    drift: Math.random() * Math.PI * 2,
+    opacity: 0.4 + Math.random() * 0.6
+  }));
+
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const ember of embers) {
+      ember.drift += 0.025;
+
+      // 火の粉は下から上へ、少し揺れながら昇る
+      ember.x += Math.sin(ember.drift) * 0.6;
+      ember.y -= ember.speed;
+
+// 外側の光
+const glow = ctx.createRadialGradient(
+  ember.x,
+  ember.y,
+  0,
+  ember.x,
+  ember.y,
+  ember.size * 4
+);
+
+glow.addColorStop(
+  0,
+  `rgba(255, 245, 180, ${ember.opacity})`
+);
+glow.addColorStop(
+  0.25,
+  `rgba(255, 170, 50, ${ember.opacity * 0.8})`
+);
+glow.addColorStop(
+  1,
+  'rgba(255, 80, 20, 0)'
+);
+
+ctx.fillStyle = glow;
+ctx.beginPath();
+ctx.arc(
+  ember.x,
+  ember.y,
+  ember.size * 4,
+  0,
+  Math.PI * 2
+);
+ctx.fill();
+
+// 火の粉本体
+ctx.fillStyle = `rgba(255, 220, 120, ${ember.opacity})`;
+ctx.beginPath();
+ctx.arc(
+  ember.x,
+  ember.y,
+  ember.size,
+  0,
+  Math.PI * 2
+);
+ctx.fill();
+      // 画面上へ抜けたら下から再出現
+      if (ember.y < -10) {
+        ember.y = canvas.height + 10;
+        ember.x = Math.random() * canvas.width;
+      }
+
+      if (ember.x < -10) ember.x = canvas.width + 10;
+      if (ember.x > canvas.width + 10) ember.x = -10;
+    }
+
+    this.weatherAnimFrame = requestAnimationFrame(draw);
+  };
+
+  draw();
+}
   initializeTableTouchGesture() {
     this.touchGesture = new TableTouchGesture(this.rootElementRef.nativeElement, this.ngZone);
     this.touchGesture.onstart = this.onTableTouchStart.bind(this);
